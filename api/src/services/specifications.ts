@@ -406,10 +406,17 @@ class OASSpecsService implements SpecificationSubService {
 		);
 
 		if (!relation) {
-			propertyObject = {
-				...propertyObject,
-				...this.fieldTypes[field.type],
-			};
+			if (field.meta?.interface === 'list') {
+				propertyObject = {
+					...propertyObject,
+					...this.listType(field.meta.options?.fields),
+				};
+			} else {
+				propertyObject = {
+					...propertyObject,
+					...this.fieldTypes[field.type],
+				};
+			}
 		} else {
 			const relationType = getRelationType({
 				relation,
@@ -570,6 +577,22 @@ class OASSpecsService implements SpecificationSubService {
 			type: 'object',
 		},
 	};
+
+	private listType(fields: any[] = []) {
+		const properties = fields.reduce((a, { field, type }: { field?: string; type?: Type }) => {
+			if (!field || !type) return a;
+			if (!(type in this.fieldTypes)) return a;
+			a[field] = this.fieldTypes[type];
+			return a;
+		}, {});
+		return {
+			type: 'array',
+			items: {
+				type: 'object',
+				properties,
+			},
+		};
+	}
 }
 
 class GraphQLSpecsService implements SpecificationSubService {
