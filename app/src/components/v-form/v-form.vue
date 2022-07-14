@@ -21,7 +21,7 @@
 					fieldsMeta[field.field]?.width || 'full',
 					index === firstVisibleFieldIndex ? 'first-visible-field' : '',
 				]"
-				:field="field"
+				:field="{ ...field, meta: fieldsMeta[field.field] }"
 				:fields="fieldsForGroup[index] || []"
 				:values="modelValue || {}"
 				:initial-values="initialValues || {}"
@@ -45,7 +45,7 @@
 				"
 				:key="field.field + '_field'"
 				:class="index === firstVisibleFieldIndex ? 'first-visible-field' : ''"
-				:field="field"
+				:field="{ ...field, meta: fieldsMeta[field.field] }"
 				:autofocus="index === firstEditableFieldIndex && autofocus"
 				:model-value="(values || {})[field.field]"
 				:initial-value="(initialValues || {})[field.field]"
@@ -254,7 +254,7 @@ export default defineComponent({
 
 				return fields.value.reduce((result: Record<string, FieldMeta>, field: Field) => {
 					const { meta } = applyConditions(valuesWithDefaults, setPrimaryKeyReadonly(field));
-					if (meta) result[meta.field] = meta;
+					if (meta) result[meta?.field ?? field.field] = meta;
 					return result;
 				}, {} as Record<string, FieldMeta>);
 

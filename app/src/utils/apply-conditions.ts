@@ -1,7 +1,7 @@
 import { Field } from '@directus/shared/types';
 import { parseFilter } from '@/utils/parse-filter';
 import { validatePayload } from '@directus/shared/utils';
-import { merge } from 'lodash';
+import { merge, pick } from 'lodash';
 
 export function applyConditions(item: Record<string, any>, field: Field) {
 	if (field.meta && Array.isArray(field.meta?.conditions)) {
@@ -17,12 +17,7 @@ export function applyConditions(item: Record<string, any>, field: Field) {
 		if (matchingCondition) {
 			return {
 				...field,
-				meta: merge({}, field.meta || {}, {
-					readonly: matchingCondition.readonly,
-					options: matchingCondition.options,
-					hidden: matchingCondition.hidden,
-					required: matchingCondition.required,
-				}),
+				meta: merge({}, field.meta || {}, pick(matchingCondition, ['readonly', 'options', 'hidden', 'required'])),
 			};
 		}
 

@@ -5,7 +5,7 @@
 			:fields="fields"
 			:model-value="values"
 			:primary-key="primaryKey"
-			:group="field.meta.field"
+			:group="field.meta?.field"
 			:validation-errors="validationErrors"
 			:loading="loading"
 			:disabled="disabled"
