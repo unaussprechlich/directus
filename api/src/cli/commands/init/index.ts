@@ -3,7 +3,8 @@ import execa from 'execa';
 import inquirer from 'inquirer';
 import { Knex } from 'knex';
 import ora from 'ora';
-import { v4 as uuidV4 } from 'uuid';
+import { v4 as uuid } from 'uuid';
+import Joi from 'joi';
 import runMigrations from '../../../database/migrations/run';
 import runSeed from '../../../database/seeds/run';
 import createDBConnection, { Credentials } from '../../utils/create-db-connection';
@@ -75,6 +76,12 @@ export default async function init(): Promise<void> {
 			name: 'email',
 			message: 'Email',
 			default: 'admin@example.com',
+			validate: (input: string) => {
+				const emailSchema = Joi.string().email().required();
+				const { error } = emailSchema.validate(input);
+				if (error) throw new Error('The email entered is not a valid email address!');
+				return true;
+			},
 		},
 		{
 			type: 'password',
@@ -90,8 +97,8 @@ export default async function init(): Promise<void> {
 
 	firstUser.password = await generateHash(firstUser.password);
 
-	const userID = uuidV4();
-	const roleID = uuidV4();
+	const userID = uuid();
+	const roleID = uuid();
 
 	await db('directus_roles').insert({
 		id: roleID,

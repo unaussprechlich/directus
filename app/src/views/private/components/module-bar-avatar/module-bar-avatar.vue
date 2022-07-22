@@ -16,17 +16,11 @@
 		<v-hover v-slot="{ hover }">
 			<v-dialog v-model="signOutActive" @esc="signOutActive = false">
 				<template #activator="{ on }">
-					<v-button
-						v-tooltip.right="t('sign_out')"
-						tile
-						icon
-						x-large
-						:class="{ show: hover }"
-						class="sign-out"
-						@click="on"
-					>
-						<v-icon name="logout" />
-					</v-button>
+					<transition name="sign-out">
+						<v-button v-if="hover" v-tooltip.right="t('sign_out')" tile icon x-large class="sign-out" @click="on">
+							<v-icon name="logout" />
+						</v-button>
+					</transition>
 				</template>
 
 				<v-card>
@@ -42,14 +36,14 @@
 
 			<router-link :to="userProfileLink">
 				<v-avatar v-tooltip.right="userFullName" tile large :class="{ 'no-avatar': !avatarURL }">
-					<img
+					<v-image
 						v-if="avatarURL && !avatarError"
 						:src="avatarURL"
 						:alt="userFullName"
 						class="avatar-image"
 						@error="avatarError = $event"
 					/>
-					<v-icon v-else name="account_circle" outline />
+					<v-icon v-else name="account_circle" />
 				</v-avatar>
 			</router-link>
 		</v-hover>
@@ -57,12 +51,11 @@
 </template>
 
 <script lang="ts">
-import { useI18n } from 'vue-i18n';
-import { defineComponent, computed, ref } from 'vue';
-import { useUserStore, useAppStore, useNotificationsStore } from '@/stores/';
+import { useAppStore, useNotificationsStore, useUserStore } from '@/stores/';
 import { getRootPath } from '@/utils/get-root-path';
-import { addTokenToURL } from '@/api';
 import { storeToRefs } from 'pinia';
+import { computed, defineComponent, ref } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 export default defineComponent({
 	setup() {
@@ -80,7 +73,7 @@ export default defineComponent({
 
 		const avatarURL = computed<string | null>(() => {
 			if (!userStore.currentUser || !('avatar' in userStore.currentUser) || !userStore.currentUser?.avatar) return null;
-			return addTokenToURL(getRootPath() + `assets/${userStore.currentUser.avatar.id}?key=system-medium-cover`);
+			return getRootPath() + `assets/${userStore.currentUser.avatar.id}?key=system-medium-cover`;
 		});
 
 		const avatarError = ref(null);
@@ -178,21 +171,26 @@ export default defineComponent({
 		top: 0;
 		left: 0;
 		z-index: 2;
-		transform: translateY(-100%);
 		transition: transform var(--fast) var(--transition);
-
-		@media (min-width: 960px) {
-			transform: translateY(100%);
-		}
-
-		&.show {
-			transform: translateY(0%);
-		}
 
 		&:hover {
 			.v-icon {
-				--v-icon-color: var(--warning);
+				--v-icon-color: var(--primary);
 			}
+		}
+	}
+
+	.sign-out-enter-active,
+	.sign-out-leave-active {
+		transform: translateY(0%);
+	}
+
+	.sign-out-enter-from,
+	.sign-out-leave-to {
+		transform: translateY(-100%);
+
+		@media (min-width: 960px) {
+			transform: translateY(100%);
 		}
 	}
 }
