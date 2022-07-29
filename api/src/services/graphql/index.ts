@@ -103,6 +103,7 @@ if (env.GRAPHQL_INTROSPECTION === false) {
 // =================================================================================================
 import { EventEmitter, on } from 'events';
 import emitter from '../../emitter';
+import camelCase from 'camelcase';
 
 export const createPubSub = <TTopicPayload extends { [key: string]: unknown }>(emitter: EventEmitter) => {
 	return {
@@ -121,7 +122,7 @@ export const createPubSub = <TTopicPayload extends { [key: string]: unknown }>(e
 
 const messages = createPubSub(new EventEmitter());
 
-emitter.onAction('messages.items.create', ({ payload }) => {
+emitter.onAction('chat_messages.items.create', ({ collection, payload }) => {
 	messages.publish('MESSAGE_ADDED', payload);
 });
 
@@ -553,16 +554,22 @@ export class GraphQLService {
 
 			// DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEM
 			// ========================================================================================
-			schemaComposer.Subscription.addFields({
-				message: {
-					type: GraphQLJSON,
-					subscribe: async function* () {
-						for await (const payload of messages.subscribe('MESSAGE_ADDED')) {
-							yield { message: payload };
-						}
+
+			for (const collection of Object.values(schema[action].collections)) {
+				if (collection.collection.startsWith('directus_')) continue; // ignore system tables for now
+				const subscriptionName = camelCase(collection.collection);
+				// console.log(collection);
+				schemaComposer.Subscription.addFields({
+					[subscriptionName]: {
+						type: GraphQLJSON,
+						subscribe: async function* () {
+							for await (const payload of messages.subscribe('MESSAGE_ADDED')) {
+								yield { [subscriptionName]: payload };
+							}
+						},
 					},
-				},
-			});
+				});
+			}
 			// ========================================================================================
 
 			return { CollectionTypes };

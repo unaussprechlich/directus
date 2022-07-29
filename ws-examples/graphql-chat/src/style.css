@@ -7,17 +7,37 @@ body {
 
 body {
 	display: flex;
+	flex-direction: column;
 }
 
-body > * {
+section {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+}
+
+section > * {
 	flex-basis: 50%;
+}
+
+h1 {
+	padding: 8px 16px;
+	margin: 0;
+	border-bottom: 1px solid #000;
+}
+h1 > small {
+	padding-left: 8px;
+	font-size: small;
 }
 
 #messages {
 	font-family: monospace;
-	white-space: pre;
 	background-color: #efefef;
 	padding: 12px;
+}
+
+#history {
+	white-space: pre;
 }
 
 #send {

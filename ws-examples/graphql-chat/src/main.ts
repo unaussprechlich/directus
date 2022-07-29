@@ -8,12 +8,10 @@ const client = createClient({
 });
 
 client.subscribe(
+	{ query: 'subscription { chatMessages }' },
 	{
-		query: 'subscription { message }',
-	},
-	{
-		next: (data) => {
-			document.querySelector('#messages').innerText += '\n\n' + data.data.message.message;
+		next: ({ data: { chatMessages } }) => {
+			document.querySelector('#messages').innerText += '\n\n' + chatMessages.message;
 		},
 		error: (err) => {
 			/*console.error(err)*/
@@ -30,11 +28,12 @@ document.querySelector('#send')?.addEventListener('submit', async (event) => {
 	const data = new FormData(event.target as HTMLFormElement);
 	const value = Object.fromEntries(data.entries());
 
-	await fetch('http://localhost:8055/items/messages', {
+	await fetch('http://localhost:8055/items/chat_messages', {
 		method: 'POST',
 		body: JSON.stringify(value),
 		headers: {
 			'Content-Type': 'application/json',
+			Authorization: 'Bearer admin',
 		},
 	});
 
