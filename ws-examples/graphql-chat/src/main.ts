@@ -1,5 +1,5 @@
 import { createClient } from 'graphql-ws';
-import { loadHistory, subscribeToChat } from './api';
+import { loadHistory, sendMessage, subscribeToChat } from './api';
 
 const client = createClient({
 	url: 'ws://localhost:8055/graphql',
@@ -31,17 +31,6 @@ subscribeToChat(client);
 document.querySelector('#send')?.addEventListener('submit', async (event) => {
 	event.preventDefault();
 
-	const data = new FormData(event.target as HTMLFormElement);
-	const value = Object.fromEntries(data.entries());
-
-	await fetch('http://localhost:8055/items/chat_messages', {
-		method: 'POST',
-		body: JSON.stringify(value),
-		headers: {
-			'Content-Type': 'application/json',
-			Authorization: 'Bearer admin',
-		},
-	});
-
-	document.querySelector('#send')?.reset();
+	const message = document.querySelector('textarea[name="message"]');
+	await sendMessage((message as HTMLTextAreaElement).value);
 });

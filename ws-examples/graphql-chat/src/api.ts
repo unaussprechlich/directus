@@ -23,6 +23,17 @@ export async function loadHistory() {
 	}
 }
 
+export async function sendMessage(message: string) {
+	return await fetch('http://localhost:8055/items/chat_messages', {
+		method: 'POST',
+		body: JSON.stringify({ message }),
+		headers: {
+			'Content-Type': 'application/json',
+			Authorization: 'Bearer admin',
+		},
+	});
+}
+
 export function subscribeToChat(client: Client) {
 	client.subscribe(
 		{ query: 'subscription { chatMessages }' },
