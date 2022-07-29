@@ -73,13 +73,13 @@
 
 <script setup lang="ts">
 import api, { addTokenToURL } from '@/api';
-import { RelationQuerySingle, useRelationM2O, useRelationSingle } from '@/composables/use-relation';
-import formatFilesize from '@/utils/format-filesize';
-import { getRootPath } from '@/utils/get-root-path';
+import { useRelationM2O } from '@/composables/use-relation-m2o';
+import { RelationQuerySingle, useRelationSingle } from '@/composables/use-relation-single';
+import { formatFilesize } from '@/utils/format-filesize';
 import { readableMimeType } from '@/utils/readable-mime-type';
-import DrawerItem from '@/views/private/components/drawer-item';
-import FileLightbox from '@/views/private/components/file-lightbox';
-import ImageEditor from '@/views/private/components/image-editor';
+import DrawerItem from '@/views/private/components/drawer-item.vue';
+import FileLightbox from '@/views/private/components/file-lightbox.vue';
+import ImageEditor from '@/views/private/components/image-editor.vue';
 import { computed, ref, toRefs } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -128,12 +128,11 @@ const src = computed(() => {
 	if (!image.value) return null;
 
 	if (image.value.type.includes('svg')) {
-		return getRootPath() + `assets/${image.value.id}`;
+		return '/assets/' + image.value.id;
 	}
 	if (image.value.type.includes('image')) {
 		const fit = props.crop ? 'cover' : 'contain';
-		const url =
-			getRootPath() + `assets/${image.value.id}?key=system-large-${fit}&cache-buster=${image.value.modified_on}`;
+		const url = `/assets/${image.value.id}?key=system-large-${fit}&cache-buster=${image.value.modified_on}`;
 		return addTokenToURL(url);
 	}
 
@@ -144,7 +143,7 @@ const ext = computed(() => (image.value ? readableMimeType(image.value.type, tru
 
 const downloadSrc = computed(() => {
 	if (!image.value) return null;
-	return addTokenToURL(getRootPath() + `assets/${image.value.id}`);
+	return addTokenToURL('/assets/' + image.value.id);
 });
 
 const meta = computed(() => {
