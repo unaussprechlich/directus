@@ -847,6 +847,19 @@ importers:
       swagger-cli: 4.0.4_openapi-types@12.0.0
       swagger-ui-watcher: 2.1.12
 
+  ws-examples/graphql-chat:
+    specifiers:
+      graphql: ^16.5.0
+      graphql-ws: ^5.9.1
+      typescript: ^4.4.4
+      vite: ^2.7.2
+    dependencies:
+      graphql: 16.5.0
+      graphql-ws: 5.9.1_graphql@16.5.0
+    devDependencies:
+      typescript: 4.7.4
+      vite: 2.9.9
+
 packages:
   /@ampproject/remapping/2.2.0:
     resolution:
@@ -8315,10 +8328,26 @@ packages:
       graphql: 15.8.0
     dev: false
 
+  /graphql-ws/5.9.1_graphql@16.5.0:
+    resolution:
+      { integrity: sha512-mL/SWGBwIT9Meq0NlfS55yXXTOeWPMbK7bZBEZhFu46bcGk1coTx2Sdtzxdk+9yHWngD+Fk1PZDWaAutQa9tpw== }
+    engines: { node: '>=10' }
+    peerDependencies:
+      graphql: '>=0.11 <=16'
+    dependencies:
+      graphql: 16.5.0
+    dev: false
+
   /graphql/15.8.0:
     resolution:
       { integrity: sha512-5gghUc24tP9HRznNpV2+FIoq3xKkj5dTQqf4v0CpdPbFVwFkWoxOM+o+2OC9ZSvjEMTjfmG9QT+gcvggTwW1zw== }
     engines: { node: '>= 10.x' }
+    dev: false
+
+  /graphql/16.5.0:
+    resolution:
+      { integrity: sha512-qbHgh8Ix+j/qY+a/ZcJnFQ+j8ezakqPiHwPiZhV/3PgGlgf96QMBB5/f2rkiC9sgLoy/xvT6TSiaf2nTHJh5iA== }
+    engines: { node: ^12.22.0 || ^14.16.0 || ^16.0.0 || >=17.0.0 }
     dev: false
 
   /gray-matter/4.0.3:
@@ -15606,6 +15635,31 @@ packages:
       gray-matter: 4.0.3
       markdown-it: 13.0.1
       vite: 2.9.9_sass@1.43.4
+    dev: true
+
+  /vite/2.9.9:
+    resolution:
+      { integrity: sha512-ffaam+NgHfbEmfw/Vuh6BHKKlI/XIAhxE5QSS7gFLIngxg171mg1P3a4LSRME0z2ZU1ScxoKzphkipcYwSD5Ew== }
+    engines: { node: '>=12.2.0' }
+    hasBin: true
+    peerDependencies:
+      less: '*'
+      sass: '*'
+      stylus: '*'
+    peerDependenciesMeta:
+      less:
+        optional: true
+      sass:
+        optional: true
+      stylus:
+        optional: true
+    dependencies:
+      esbuild: 0.14.49
+      postcss: 8.4.14
+      resolve: 1.22.1
+      rollup: 2.77.0
+    optionalDependencies:
+      fsevents: 2.3.2
     dev: true
 
   /vite/2.9.9_sass@1.43.4:
