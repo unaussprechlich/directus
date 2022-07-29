@@ -102,7 +102,7 @@ if (env.GRAPHQL_INTROSPECTION === false) {
 // DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DE
 // =================================================================================================
 import { EventEmitter, on } from 'events';
-import emitter from '../emitter';
+import emitter from '../../emitter';
 
 export const createPubSub = <TTopicPayload extends { [key: string]: unknown }>(emitter: EventEmitter) => {
 	return {

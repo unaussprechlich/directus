@@ -15,9 +15,11 @@ client.subscribe(
 		next: (data) => {
 			document.querySelector('#messages').innerText += '\n\n' + data.data.message.message;
 		},
-		error: (err) => console.error(err),
+		error: (err) => {
+			/*console.error(err)*/
+		},
 		complete: () => {
-			console.log('Complete (whatever that means)');
+			//console.log('Complete (whatever that means)');
 		},
 	}
 );
