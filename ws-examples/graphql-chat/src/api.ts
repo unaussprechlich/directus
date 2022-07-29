@@ -19,7 +19,7 @@ export async function loadHistory() {
 		}
 	).then((resp) => resp.json());
 	for (const { message, user_created, date_created } of data) {
-		$history.innerText += `\n\n${user_created?.first_name}${user_created?.last_name}[${date_created}] ${message}`;
+		$history.innerText += `\n\n${user_created?.first_name} ${user_created?.last_name} [${date_created}] ${message}`;
 	}
 }
 
@@ -52,7 +52,7 @@ subscription {
 				const { message = '', date_created = '', user_created = '' } = data.chatMessagesCreated;
 				document.getElementById(
 					'history'
-				)!.innerText += `\n\n${user_created?.first_name}${user_created?.last_name}[${date_created}] ${message}`;
+				)!.innerText += `\n\n${user_created?.first_name} ${user_created?.last_name} [${date_created}] ${message}`;
 			},
 			error: (err) => {
 				/*console.error(err)*/
