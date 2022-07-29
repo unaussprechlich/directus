@@ -3,7 +3,7 @@ import { loadHistory, sendMessage, subscribeToChat } from './api';
 
 const client = createClient({
 	url: 'ws://localhost:8055/graphql',
-	keepAlive: 5000,
+	keepAlive: 30000,
 	connectionParams: async () => {
 		return { token: 'admin' };
 	},
