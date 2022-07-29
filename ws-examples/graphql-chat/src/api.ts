@@ -7,7 +7,7 @@ export async function loadHistory() {
 	const { data = [] } = await fetch(
 		'http://localhost:8055/items/chat_messages?' +
 			new URLSearchParams({
-				'fields[]': 'message',
+				fields: 'message,date_created,user_created.first_name,user_created.last_name',
 				sort: 'date_created',
 			}),
 		{
@@ -18,8 +18,8 @@ export async function loadHistory() {
 			},
 		}
 	).then((resp) => resp.json());
-	for (const { message } of data) {
-		$history.innerText += '\n\n' + message;
+	for (const { message, user_created, date_created } of data) {
+		$history.innerText += `\n\n${user_created?.first_name}${user_created?.last_name}[${date_created}] ${message}`;
 	}
 }
 
@@ -39,7 +39,7 @@ export function subscribeToChat(client: Client) {
 		{
 			query: `
 subscription { 
-    chatMessages { 
+    chatMessagesCreated { 
         message, 
         date_created, 
         user_created { first_name, last_name } 
@@ -47,8 +47,12 @@ subscription {
 }`,
 		},
 		{
-			next: ({ data: { chatMessages } }) => {
-				document.getElementById('history')!.innerText += '\n\n' + chatMessages.message;
+			next: ({ data }) => {
+				// console.log(data);
+				const { message = '', date_created = '', user_created = '' } = data.chatMessagesCreated;
+				document.getElementById(
+					'history'
+				)!.innerText += `\n\n${user_created?.first_name}${user_created?.last_name}[${date_created}] ${message}`;
 			},
 			error: (err) => {
 				/*console.error(err)*/

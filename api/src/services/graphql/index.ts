@@ -104,6 +104,7 @@ if (env.GRAPHQL_INTROSPECTION === false) {
 import { EventEmitter, on } from 'events';
 import emitter from '../../emitter';
 import camelCase from 'camelcase';
+import { getSchema } from '../../utils/get-schema';
 
 export const createPubSub = <TTopicPayload extends { [key: string]: unknown }>(emitter: EventEmitter) => {
 	return {
@@ -122,19 +123,17 @@ export const createPubSub = <TTopicPayload extends { [key: string]: unknown }>(e
 
 const messages = createPubSub(new EventEmitter());
 
-emitter.onAction('items.create', ({ collection, key, payload }) => {
+emitter.onAction('items.create', async ({ collection, key, payload }) => {
 	const eventName = `${collection}_created`.toUpperCase();
-	// we should fetch the full object
-	messages.publish(eventName, payload);
+	messages.publish(eventName, { collection, key, payload });
 });
-emitter.onAction('items.update', ({ collection, keys, payload }) => {
+emitter.onAction('items.update', async ({ collection, keys, payload }) => {
 	const eventName = `${collection}_updated`.toUpperCase();
-	// we should fetch the full object
-	messages.publish(eventName, payload);
+	messages.publish(eventName, { collection, keys, payload });
 });
 emitter.onAction('items.delete', ({ collection, keys }) => {
 	const eventName = `${collection}_deleted`.toUpperCase();
-	messages.publish(eventName, keys);
+	messages.publish(eventName, { keys });
 });
 
 /**
@@ -1044,11 +1043,11 @@ export class GraphQLService {
 						schemaComposer.Subscription.addFields({
 							[subscriptionName]: {
 								type: ReadCollectionTypes[collection.collection],
-								subscribe: async function* () {
-									for await (const payload of messages.subscribe(eventName)) {
-										yield { [subscriptionName]: payload };
-									}
-								},
+								subscribe: createSubscriptionGenerator(
+									event as 'created' | 'updated' | 'deleted',
+									eventName,
+									subscriptionName
+								),
 							},
 						});
 					}
@@ -1115,6 +1114,24 @@ export class GraphQLService {
 			}
 
 			return { ReadCollectionTypes, ReadableCollectionFilterTypes };
+
+			function createSubscriptionGenerator(action: 'created' | 'updated' | 'deleted', event: string, name: string) {
+				return async function* () {
+					for await (const payload of messages.subscribe(event)) {
+						if (action === 'created') {
+							const s = new ItemsService(payload.collection, { schema: await getSchema() });
+							yield { [name]: await s.readOne(payload.key, { fields: ['*', '*.*'] }) };
+						}
+						if (action === 'updated') {
+							const s = new ItemsService(payload.collection, { schema: await getSchema() });
+							yield { [name]: await s.readMany(payload.keys, { fields: ['*', '*.*'] }) };
+						}
+						if (action === 'deleted') {
+							yield { [name]: payload.keys };
+						}
+					}
+				};
+			}
 		}
 
 		function getWritableTypes() {
