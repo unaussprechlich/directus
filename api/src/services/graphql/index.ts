@@ -552,26 +552,6 @@ export class GraphQLService {
 				}
 			}
 
-			// DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEM
-			// ========================================================================================
-
-			for (const collection of Object.values(schema[action].collections)) {
-				if (collection.collection.startsWith('directus_')) continue; // ignore system tables for now
-				const subscriptionName = camelCase(collection.collection);
-				// console.log(collection);
-				schemaComposer.Subscription.addFields({
-					[subscriptionName]: {
-						type: GraphQLJSON,
-						subscribe: async function* () {
-							for await (const payload of messages.subscribe('MESSAGE_ADDED')) {
-								yield { [subscriptionName]: payload };
-							}
-						},
-					},
-				});
-			}
-			// ========================================================================================
-
 			return { CollectionTypes };
 		}
 
@@ -1040,6 +1020,23 @@ export class GraphQLService {
 							const result = await self.resolveQuery(info);
 							context.data = result;
 							return result;
+						},
+					});
+				}
+
+				// DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DE
+				// =================================================================================================
+				if (!collection.collection.startsWith('directus_')) {
+					const subscriptionName = camelCase(collection.collection);
+					// console.log(ReadCollectionTypes[collection.collection].getType());
+					schemaComposer.Subscription.addFields({
+						[subscriptionName]: {
+							type: ReadCollectionTypes[collection.collection],
+							subscribe: async function* () {
+								for await (const payload of messages.subscribe('MESSAGE_ADDED')) {
+									yield { [subscriptionName]: payload };
+								}
+							},
 						},
 					});
 				}

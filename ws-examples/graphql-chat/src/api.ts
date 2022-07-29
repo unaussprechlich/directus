@@ -36,7 +36,16 @@ export async function sendMessage(message: string) {
 
 export function subscribeToChat(client: Client) {
 	client.subscribe(
-		{ query: 'subscription { chatMessages }' },
+		{
+			query: `
+subscription { 
+    chatMessages { 
+        message, 
+        date_created, 
+        user_created { first_name, last_name } 
+    } 
+}`,
+		},
 		{
 			next: ({ data: { chatMessages } }) => {
 				document.getElementById('history')!.innerText += '\n\n' + chatMessages.message;
