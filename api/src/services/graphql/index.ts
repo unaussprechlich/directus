@@ -122,8 +122,19 @@ export const createPubSub = <TTopicPayload extends { [key: string]: unknown }>(e
 
 const messages = createPubSub(new EventEmitter());
 
-emitter.onAction('chat_messages.items.create', ({ collection, payload }) => {
-	messages.publish('MESSAGE_ADDED', payload);
+emitter.onAction('items.create', ({ collection, key, payload }) => {
+	const eventName = `${collection}_created`.toUpperCase();
+	// we should fetch the full object
+	messages.publish(eventName, payload);
+});
+emitter.onAction('items.update', ({ collection, keys, payload }) => {
+	const eventName = `${collection}_updated`.toUpperCase();
+	// we should fetch the full object
+	messages.publish(eventName, payload);
+});
+emitter.onAction('items.delete', ({ collection, keys }) => {
+	const eventName = `${collection}_deleted`.toUpperCase();
+	messages.publish(eventName, keys);
 });
 
 /**
@@ -1027,18 +1038,20 @@ export class GraphQLService {
 				// DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DE
 				// =================================================================================================
 				if (!collection.collection.startsWith('directus_')) {
-					const subscriptionName = camelCase(collection.collection);
-					// console.log(ReadCollectionTypes[collection.collection].getType());
-					schemaComposer.Subscription.addFields({
-						[subscriptionName]: {
-							type: ReadCollectionTypes[collection.collection],
-							subscribe: async function* () {
-								for await (const payload of messages.subscribe('MESSAGE_ADDED')) {
-									yield { [subscriptionName]: payload };
-								}
+					for (const event of ['created', 'updated', 'deleted']) {
+						const eventName = `${collection.collection}_${event}`.toUpperCase();
+						const subscriptionName = camelCase(eventName);
+						schemaComposer.Subscription.addFields({
+							[subscriptionName]: {
+								type: ReadCollectionTypes[collection.collection],
+								subscribe: async function* () {
+									for await (const payload of messages.subscribe(eventName)) {
+										yield { [subscriptionName]: payload };
+									}
+								},
 							},
-						},
-					});
+						});
+					}
 				}
 			}
 
