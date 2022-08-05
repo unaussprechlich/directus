@@ -12,7 +12,8 @@ import logger from './logger';
 import emitter from './emitter';
 import checkForUpdate from 'update-check';
 import pkg from '../package.json';
-import { WebSocketService } from './services/websocket';
+import { SubscriptionService } from './services/websocket/subscribe';
+import { WebsocketService } from './services/websocket/websocket';
 import { getConfigFromEnv } from './utils/get-config-from-env';
 
 export async function createServer(): Promise<http.Server> {
@@ -82,10 +83,13 @@ export async function createServer(): Promise<http.Server> {
 		res.once('close', complete.bind(null, false));
 	});
 
-	let websocketService: WebSocketService;
-
+	let subscriptionService: SubscriptionService, websocketService: WebsocketService;
 	if (env.WEBSOCKETS_ENABLED === true) {
-		websocketService = new WebSocketService(server);
+		// GraphQL Subscriptions
+		subscriptionService = new SubscriptionService(server);
+
+		// Websocket Service
+		websocketService = new WebsocketService(server);
 	}
 
 	const terminusOptions: TerminusOptions = {
@@ -107,6 +111,7 @@ export async function createServer(): Promise<http.Server> {
 	}
 
 	async function onSignal() {
+		subscriptionService?.terminate();
 		websocketService?.terminate();
 
 		const database = getDatabase();
