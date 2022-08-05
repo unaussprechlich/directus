@@ -1145,15 +1145,18 @@ export class GraphQLService {
 				return async function* () {
 					for await (const payload of messages.subscribe(event)) {
 						if (action === 'created') {
-							const s = new ItemsService(payload.collection, { schema: await getSchema() });
-							yield { [name]: await s.readOne(payload.key, { fields: ['*', '*.*'] }) };
+							const { collection, key } = payload as any;
+							const s = new ItemsService(collection, { schema: await getSchema() });
+							yield { [name]: await s.readOne(key, { fields: ['*', '*.*'] }) };
 						}
 						if (action === 'updated') {
-							const s = new ItemsService(payload.collection, { schema: await getSchema() });
-							yield { [name]: await s.readMany(payload.keys, { fields: ['*', '*.*'] }) };
+							const { collection, keys } = payload as any;
+							const s = new ItemsService(collection, { schema: await getSchema() });
+							yield { [name]: await s.readMany(keys, { fields: ['*', '*.*'] }) };
 						}
 						if (action === 'deleted') {
-							yield { [name]: payload.keys };
+							const { keys } = payload as any;
+							yield { [name]: keys };
 						}
 					}
 				};

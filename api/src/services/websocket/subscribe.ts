@@ -16,6 +16,7 @@ export class SubscriptionService extends SocketService {
 			endpoint: '/graphql',
 			public: true,
 		});
+		// hook ws server into graphql logic
 		useGraphQLServer(
 			{
 				context: {},
@@ -33,10 +34,12 @@ export class SubscriptionService extends SocketService {
 			},
 			this.server
 		);
-		// this.server.on('connection', (ws) => {
-		// 	ws.on('message', (data) => {
-		// 		logger.trace(`[WSS GraphQL] Received: ${data}`);
-		// 	});
-		// });
+		// add some basic debug logs
+		this.server.on('connection', (ws) => {
+			logger.trace(`[WSS GraphQL] Connected`);
+			ws.on('message', (data) => {
+				logger.trace(`[WSS GraphQL] Received: ${data}`);
+			});
+		});
 	}
 }
