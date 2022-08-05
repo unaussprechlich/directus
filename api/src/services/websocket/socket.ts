@@ -15,8 +15,7 @@ export const defaultSocketConfig: SocketConfig = {
 	public: false,
 };
 
-function extractToken(req: any): string | null {
-	const { query } = parse(req.url, true);
+function extractToken(req: any, query: any): string | null {
 	if (query && query.access_token) {
 		return query.access_token as string;
 	}
@@ -41,21 +40,21 @@ export class SocketService {
 		this.config = config ?? defaultSocketConfig;
 
 		httpServer.on('upgrade', async (request: any, socket, head) => {
-			const { pathname } = parse(request.url!);
-			let accountability: Accountability;
-			if (!this.config.public) {
-				// check token before upgrading when not set to public access
-				accountability = await getAccountabilityForToken(extractToken(request));
-				if (!accountability || !accountability.user /* || !accountability.role*/) {
-					// do we need to check the role?
-					logger.debug('Websocket upgrade denied');
-					socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
-					socket.destroy();
-					return;
-				}
-			}
-
+			const { pathname, query } = parse(request.url!, true);
 			if (pathname === this.config.endpoint) {
+				let accountability: Accountability;
+				logger.info('test ' + this.constructor.name + ' - ' + JSON.stringify(this.config));
+				if (!this.config.public) {
+					// check token before upgrading when not set to public access
+					accountability = await getAccountabilityForToken(extractToken(request, query));
+					if (!accountability || !accountability.user /* || !accountability.role*/) {
+						// do we need to check the role?
+						logger.debug('Websocket upgrade denied - ' + JSON.stringify(accountability));
+						socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+						socket.destroy();
+						return;
+					}
+				}
 				this.server.handleUpgrade(request, socket, head, (ws) => {
 					this.server.emit('connection', ws, request);
 				});
