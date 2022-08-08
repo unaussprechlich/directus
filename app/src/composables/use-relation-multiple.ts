@@ -91,7 +91,6 @@ export function useRelationMultiple(
 			relation.value.type === 'o2m'
 				? relation.value.relatedPrimaryKeyField.field
 				: relation.value.junctionPrimaryKeyField.field;
-
 		const items: DisplayItem[] = fetchedItems.value.map((item: Record<string, any>) => {
 			const editsIndex = _value.value.update.findIndex(
 				(edit) => typeof edit === 'object' && edit[targetPKField] === item[targetPKField]
@@ -116,6 +115,8 @@ export function useRelationMultiple(
 
 			return updatedItem;
 		});
+
+		const sortField = relation.value.sortField;
 
 		const selectedOnPage = fetchedSelectItems.value.map((item) => {
 			const edits = selected.value.find((edit) => {
@@ -146,23 +147,30 @@ export function useRelationMultiple(
 			return merge({}, item, edits);
 		});
 
-		const newItems = getPage(existingItemCount.value + selected.value.length, createdItems.value);
-
 		items.push(
-			...selectedOnPage,
-			...newItems.map((item, index) => {
+			...selectedOnPage.map((item, index) => {
 				return {
 					...item,
-					$type: 'created',
-					$index: selectedOnPage.length + index,
+					$index: items.length + index,
 				} as DisplayItem;
 			})
 		);
 
-		const sortField = relation.value.sortField;
+		const newItems = getPage(existingItemCount.value + selected.value.length, createdItems.value);
 
-		if ((previewQuery.value.limit > 0 && totalItemCount.value > previewQuery.value.limit) || !sortField) return items;
+		items.push(
+			...newItems.map((item, index) => {
+				return {
+					...item,
+					$type: 'created',
+					$index: items.length + index,
+				} as DisplayItem;
+			})
+		);
 
+		if ((previewQuery.value.limit > 0 && totalItemCount.value > previewQuery.value.limit) || !sortField) {
+			return items;
+		}
 		return items.sort((a, b) => {
 			return a[sortField] - b[sortField];
 		});
