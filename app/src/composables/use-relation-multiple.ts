@@ -154,7 +154,7 @@ export function useRelationMultiple(
 				return {
 					...item,
 					$type: 'created',
-					$index: index,
+					$index: selectedOnPage.length + index,
 				} as DisplayItem;
 			})
 		);
