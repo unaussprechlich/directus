@@ -134,6 +134,13 @@ const allowedEnvironmentVars = [
 	// extensions
 	'EXTENSIONS_PATH',
 	'EXTENSIONS_AUTO_RELOAD',
+	// messenger
+	'MESSENGER_STORE',
+	'MESSENGER_NAMESPACE',
+	'MESSENGER_REDIS',
+	'MESSENGER_REDIS_HOST',
+	'MESSENGER_REDIS_PORT',
+	'MESSENGER_REDIS_PASSWORD',
 	// emails
 	'EMAIL_FROM',
 	'EMAIL_TRANSPORT',
@@ -245,6 +252,8 @@ const defaults: Record<string, any> = {
 	GRAPHQL_INTROSPECTION: true,
 
 	WEBSOCKETS_ENABLED: true,
+  
+	FLOWS_EXEC_ALLOWED_MODULES: false,
 };
 
 // Allows us to force certain environment variable into a type, instead of relying

@@ -3,7 +3,6 @@ import { Accountability, Action, Aggregate, Filter, Query, SchemaOverview } from
 import argon2 from 'argon2';
 import {
 	ArgumentNode,
-	BooleanValueNode,
 	execute,
 	ExecutionResult,
 	FieldNode,
@@ -26,14 +25,11 @@ import {
 	GraphQLString,
 	GraphQLUnionType,
 	InlineFragmentNode,
-	IntValueNode,
 	NoSchemaIntrospectionCustomRule,
-	ObjectFieldNode,
-	ObjectValueNode,
 	SelectionNode,
 	specifiedRules,
-	StringValueNode,
 	validate,
+	ValueNode,
 } from 'graphql';
 import {
 	GraphQLJSON,
@@ -438,7 +434,10 @@ export class GraphQLService {
 				CollectionTypes[collection.collection] = schemaComposer.createObjectTC({
 					name: action === 'read' ? collection.collection : `${action}_${collection.collection}`,
 					fields: Object.values(collection.fields).reduce((acc, field) => {
-						let type: GraphQLScalarType | GraphQLNonNull<GraphQLNullableType> = getGraphQLType(field.type);
+						let type: GraphQLScalarType | GraphQLNonNull<GraphQLNullableType> = getGraphQLType(
+							field.type,
+							field.special
+						);
 
 						// GraphQL doesn't differentiate between not-null and has-to-be-submitted. We
 						// can't non-null in update, as that would require every not-nullable field to be
@@ -829,7 +828,7 @@ export class GraphQLService {
 				ReadableCollectionFilterTypes[collection.collection] = schemaComposer.createInputTC({
 					name: `${collection.collection}_filter`,
 					fields: Object.values(collection.fields).reduce((acc, field) => {
-						const graphqlType = getGraphQLType(field.type);
+						const graphqlType = getGraphQLType(field.type, field.special);
 
 						let filterOperatorType: InputTypeComposer;
 
@@ -892,7 +891,7 @@ export class GraphQLService {
 				AggregatedFields[collection.collection] = schemaComposer.createObjectTC({
 					name: `${collection.collection}_aggregated_fields`,
 					fields: Object.values(collection.fields).reduce((acc, field) => {
-						const graphqlType = getGraphQLType(field.type);
+						const graphqlType = getGraphQLType(field.type, field.special);
 
 						switch (graphqlType) {
 							case GraphQLInt:
@@ -942,7 +941,7 @@ export class GraphQLService {
 				};
 
 				const hasNumericAggregates = Object.values(collection.fields).some((field) => {
-					const graphqlType = getGraphQLType(field.type);
+					const graphqlType = getGraphQLType(field.type, field.special);
 
 					if (graphqlType === GraphQLInt || graphqlType === GraphQLFloat) {
 						return true;
@@ -1533,43 +1532,33 @@ export class GraphQLService {
 	 * In order to do that, we'll parse over all ArgumentNodes and ObjectFieldNodes to manually recreate an object structure
 	 * of arguments
 	 */
-	parseArgs(
-		args: readonly ArgumentNode[] | readonly ObjectFieldNode[],
-		variableValues: GraphQLResolveInfo['variableValues']
-	): Record<string, any> {
+	parseArgs(args: readonly ArgumentNode[], variableValues: GraphQLResolveInfo['variableValues']): Record<string, any> {
 		if (!args || args.length === 0) return {};
 
-		const parseObjectValue = (arg: ObjectValueNode) => {
-			return this.parseArgs(arg.fields, variableValues);
+		const parse = (node: ValueNode): any => {
+			switch (node.kind) {
+				case 'Variable':
+					return variableValues[node.name.value];
+				case 'ListValue':
+					return node.values.map(parse);
+				case 'ObjectValue':
+					return Object.fromEntries(node.fields.map((node) => [node.name.value, parse(node.value)]));
+				case 'NullValue':
+					return null;
+				case 'StringValue':
+					return String(node.value);
+				case 'IntValue':
+				case 'FloatValue':
+					return Number(node.value);
+				case 'BooleanValue':
+					return Boolean(node.value);
+				case 'EnumValue':
+				default:
+					return node.value;
+			}
 		};
 
-		const argsObject: any = {};
-
-		for (const argument of args) {
-			if (argument.value.kind === 'ObjectValue') {
-				argsObject[argument.name.value] = parseObjectValue(argument.value);
-			} else if (argument.value.kind === 'Variable') {
-				argsObject[argument.name.value] = variableValues[argument.value.name.value];
-			} else if (argument.value.kind === 'ListValue') {
-				const values: any = [];
-
-				for (const valueNode of argument.value.values) {
-					if (valueNode.kind === 'ObjectValue') {
-						values.push(this.parseArgs(valueNode.fields, variableValues));
-					} else {
-						if (valueNode.kind === 'Variable') {
-							values.push(variableValues[valueNode.name.value]);
-						} else {
-							values.push((valueNode as any).value);
-						}
-					}
-				}
-
-				argsObject[argument.name.value] = values;
-			} else {
-				argsObject[argument.name.value] = (argument.value as IntValueNode | StringValueNode | BooleanValueNode).value;
-			}
-		}
+		const argsObject = Object.fromEntries(args.map((arg) => [arg.name.value, parse(arg.value)]));
 
 		return argsObject;
 	}
@@ -2319,7 +2308,9 @@ export class GraphQLService {
 					name: 'directus_collections_meta',
 					fields: Object.values(schema.read.collections['directus_collections'].fields).reduce((acc, field) => {
 						acc[field.field] = {
-							type: field.nullable ? getGraphQLType(field.type) : GraphQLNonNull(getGraphQLType(field.type)),
+							type: field.nullable
+								? getGraphQLType(field.type, field.special)
+								: GraphQLNonNull(getGraphQLType(field.type, field.special)),
 							description: field.note,
 						};
 
@@ -2374,7 +2365,9 @@ export class GraphQLService {
 					name: 'directus_fields_meta',
 					fields: Object.values(schema.read.collections['directus_fields'].fields).reduce((acc, field) => {
 						acc[field.field] = {
-							type: field.nullable ? getGraphQLType(field.type) : GraphQLNonNull(getGraphQLType(field.type)),
+							type: field.nullable
+								? getGraphQLType(field.type, field.special)
+								: GraphQLNonNull(getGraphQLType(field.type, field.special)),
 							description: field.note,
 						};
 
@@ -2465,7 +2458,7 @@ export class GraphQLService {
 					name: 'directus_relations_meta',
 					fields: Object.values(schema.read.collections['directus_relations'].fields).reduce((acc, field) => {
 						acc[field.field] = {
-							type: getGraphQLType(field.type),
+							type: getGraphQLType(field.type, field.special),
 							description: field.note,
 						};
 
