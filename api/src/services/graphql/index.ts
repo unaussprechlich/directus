@@ -119,18 +119,22 @@ export const createPubSub = <TTopicPayload extends { [key: string]: unknown }>(e
 };
 
 const messages = createPubSub(new EventEmitter());
-
-emitter.onAction('items.create', async ({ collection, key, payload }) => {
-	const eventName = `${collection}_created`.toUpperCase();
-	messages.publish(eventName, { collection, key, payload });
-});
-emitter.onAction('items.update', async ({ collection, keys, payload }) => {
-	const eventName = `${collection}_updated`.toUpperCase();
-	messages.publish(eventName, { collection, keys, payload });
-});
-emitter.onAction('items.delete', ({ collection, keys }) => {
-	const eventName = `${collection}_deleted`.toUpperCase();
-	messages.publish(eventName, { keys });
+[
+	'items' /*, 'activity', 'collections', 'fields', 'folders', 'permissions',
+	'presets', 'relations', 'revisions', 'roles', 'settings', 'users', 'webhooks'*/,
+].forEach((collectionName) => {
+	emitter.onAction(collectionName + '.create', async ({ collection, key, payload }) => {
+		const eventName = `${collection}_created`.toUpperCase();
+		messages.publish(eventName, { collection, key, payload });
+	});
+	emitter.onAction(collectionName + '.update', async ({ collection, keys, payload }) => {
+		const eventName = `${collection}_updated`.toUpperCase();
+		messages.publish(eventName, { collection, keys, payload });
+	});
+	emitter.onAction(collectionName + '.delete', ({ collection, keys }) => {
+		const eventName = `${collection}_deleted`.toUpperCase();
+		messages.publish(eventName, { keys });
+	});
 });
 
 /**
@@ -1059,8 +1063,6 @@ export class GraphQLService {
 					});
 				}
 
-				// DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DEMO DE
-				// =================================================================================================
 				if (!collection.collection.startsWith('directus_')) {
 					for (const event of ['created', 'updated', 'deleted']) {
 						const eventName = `${collection.collection}_${event}`.toUpperCase();
@@ -1141,17 +1143,19 @@ export class GraphQLService {
 			return { ReadCollectionTypes, ReadableCollectionFilterTypes };
 
 			function createSubscriptionGenerator(action: 'created' | 'updated' | 'deleted', event: string, name: string) {
-				return async function* () {
+				return async function* (_x: unknown, _y: unknown, _z: unknown, request: any) {
+					const selections = request.fieldNodes[0]?.selectionSet?.selections || [];
+					const { fields } = self.getQuery({}, selections, {});
 					for await (const payload of messages.subscribe(event)) {
 						if (action === 'created') {
 							const { collection, key } = payload as any;
 							const s = new ItemsService(collection, { schema: await getSchema() });
-							yield { [name]: await s.readOne(key, { fields: ['*', '*.*'] }) };
+							yield { [name]: await s.readOne(key, { fields }) };
 						}
 						if (action === 'updated') {
 							const { collection, keys } = payload as any;
 							const s = new ItemsService(collection, { schema: await getSchema() });
-							yield { [name]: await s.readMany(keys, { fields: ['*', '*.*'] }) };
+							yield { [name]: await s.readMany(keys, { fields }) };
 						}
 						if (action === 'deleted') {
 							const { keys } = payload as any;
