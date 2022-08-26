@@ -257,7 +257,7 @@ const defaults: Record<string, any> = {
 	GRAPHQL_INTROSPECTION: true,
 
 	WEBSOCKETS_ENABLED: true,
-  
+
 	FLOWS_EXEC_ALLOWED_MODULES: false,
 };
 
