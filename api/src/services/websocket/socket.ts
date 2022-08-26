@@ -2,12 +2,12 @@
  * Base class for handling the server and request upgrades
  */
 import { Accountability } from '@directus/shared/types';
-import http, { IncomingMessage } from 'http';
+import { IncomingMessage, Server as httpServer } from 'http';
 import { parse } from 'url';
 import WebSocket, { WebSocketServer } from 'ws';
 import logger from '../../logger';
 import { getAccountabilityForToken } from '../../utils/get-accountability-for-token';
-import { SocketConfig } from './types';
+import { SocketConfig, WebRequest } from './types';
 
 export const defaultSocketConfig: SocketConfig = {
 	enabled: true,
@@ -15,7 +15,7 @@ export const defaultSocketConfig: SocketConfig = {
 	public: false,
 };
 
-function extractToken(req: any, query: any): string | null {
+export function extractToken(req: any, query: any): string | null {
 	if (query && query.access_token) {
 		return query.access_token as string;
 	}
@@ -31,32 +31,32 @@ function extractToken(req: any, query: any): string | null {
 	return token;
 }
 
-export class SocketService {
+export abstract class SocketService {
 	config: SocketConfig;
 	server: WebSocket.Server;
-
-	constructor(httpServer: http.Server, config?: SocketConfig) {
+	// hook the websocket handler into the express server
+	constructor(httpServer: httpServer, config?: SocketConfig) {
 		this.server = new WebSocketServer({ noServer: true });
 		this.config = config ?? defaultSocketConfig;
 
-		httpServer.on('upgrade', async (request: any, socket, head) => {
+		httpServer.on('upgrade', async (request: IncomingMessage, socket, head) => {
 			const { pathname, query } = parse(request.url!, true);
 			if (pathname === this.config.endpoint) {
-				let accountability: Accountability;
+				const req = request as WebRequest;
 				logger.info('test ' + this.constructor.name + ' - ' + JSON.stringify(this.config));
 				if (!this.config.public) {
 					// check token before upgrading when not set to public access
-					accountability = await getAccountabilityForToken(extractToken(request, query));
-					if (!accountability || !accountability.user /* || !accountability.role*/) {
+					req.accountability = await getAccountabilityForToken(extractToken(request, query));
+					if (!req.accountability || !req.accountability.user /* || !accountability.role*/) {
 						// do we need to check the role?
-						logger.debug('Websocket upgrade denied - ' + JSON.stringify(accountability));
+						logger.debug('Websocket upgrade denied - ' + JSON.stringify(req.accountability));
 						socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
 						socket.destroy();
 						return;
 					}
 				}
 				this.server.handleUpgrade(request, socket, head, (ws) => {
-					this.server.emit('connection', ws, request);
+					this.server.emit('connection', ws, req);
 				});
 			}
 		});
