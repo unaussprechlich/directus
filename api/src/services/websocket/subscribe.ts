@@ -22,7 +22,6 @@ export class SubscriptionService extends SocketService {
 				context: {},
 				schema: async (ctx) => {
 					const accountability = await getAccountabilityForToken(ctx.connectionParams?.token as string | undefined);
-
 					const service = new GraphQLService({
 						schema: await getSchema(),
 						scope: 'items',
@@ -36,9 +35,9 @@ export class SubscriptionService extends SocketService {
 		);
 		// add some basic debug logs
 		this.server.on('connection', (ws) => {
-			logger.trace(`[WSS GraphQL] Connected`);
+			logger.debug(`[WSS GraphQL] Connected`);
 			ws.on('message', (data) => {
-				logger.trace(`[WSS GraphQL] Received: ${data}`);
+				logger.debug(`[WSS GraphQL] Received: ${data}`);
 			});
 		});
 	}
