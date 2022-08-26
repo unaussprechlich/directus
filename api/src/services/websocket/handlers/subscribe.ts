@@ -4,6 +4,7 @@ import { SubscriptionMap, WebsocketClient, WebsocketExtension, WebsocketMessage 
 import { ActionHandler, Query } from '@directus/shared/types';
 import emitter from '../../../emitter';
 import logger from '../../../logger';
+import { refreshAccountability } from '../refresh-accountability';
 
 export class SubscribeHandler implements WebsocketExtension {
 	subscriptions: SubscriptionMap;
@@ -52,23 +53,17 @@ export class SubscribeHandler implements WebsocketExtension {
 	async dispatch(collection: string, data: any) {
 		const subs = this.subscriptions[collection] ?? new Set();
 		for (const { client, query = {} } of subs) {
-			const schema = await getSchema({ accountability: client.accountability });
+			client.accountability = await refreshAccountability(client.accountability);
 			const service = new ItemsService(collection, {
-				schema,
+				schema: await getSchema({ accountability: client.accountability }),
 				accountability: client.accountability,
 			});
 			try {
 				// get the payload based on the provided query
 				const keys = data.key ? [data.key] : data.keys;
-				let payload = data.action !== 'delete' ? await service.readMany(keys, query) : data.payload;
+				const payload = data.action !== 'delete' ? await service.readMany(keys, query) : data.payload;
 				if (payload.length > 0) {
-					if (data.key) payload = payload[0];
-					// const msg = await emitter.emitFilter('websocket.subscribe.beforeSend', {
-					// 	type: 'SUBSCRIPTION',
-					// 	...data,
-					// 	payload,
-					// });
-					client.send(JSON.stringify({ payload }));
+					client.send(JSON.stringify({ payload: 'key' in data ? payload[0] : payload }));
 				}
 			} catch (err: any) {
 				logger.debug(`[WS REST] ERROR ${JSON.stringify(err)}`);
