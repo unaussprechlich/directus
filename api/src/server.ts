@@ -15,6 +15,7 @@ import pkg from '../package.json';
 import { SubscriptionService } from './services/websocket/subscribe';
 import { WebsocketService } from './services/websocket/websocket';
 import { getConfigFromEnv } from './utils/get-config-from-env';
+import { ItemsHandler, SubscribeHandler } from './services/websocket/handlers';
 
 export async function createServer(): Promise<http.Server> {
 	const server = http.createServer(await createApp());
@@ -90,6 +91,8 @@ export async function createServer(): Promise<http.Server> {
 
 		// Websocket Service
 		websocketService = new WebsocketService(server);
+		websocketService.registerExtension(new ItemsHandler());
+		websocketService.registerExtension(new SubscribeHandler());
 	}
 
 	const terminusOptions: TerminusOptions = {
