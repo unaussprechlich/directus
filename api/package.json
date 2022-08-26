@@ -117,7 +117,7 @@
 		"fs-extra": "^10.1.0",
 		"globby": "^11.0.4",
 		"graphql": "^15.5.0",
-		"graphql-ws": "5.5.5",
+		"graphql-ws": "5.10.1",
 		"graphql-compose": "^9.0.8",
 		"helmet": "^4.6.0",
 		"inquirer": "^8.2.4",
@@ -164,7 +164,7 @@
 		"uuid": "^8.3.2",
 		"uuid-validate": "0.0.3",
 		"wellknown": "^0.5.0",
-		"ws": "8.4.2",
+		"ws": "8.8.1",
 		"vm2": "^3.9.10"
 	},
 	"optionalDependencies": {
@@ -221,7 +221,7 @@
 		"@types/uuid": "8.3.4",
 		"@types/uuid-validate": "0.0.1",
 		"@types/wellknown": "0.5.3",
-		"@types/ws": "^8.2.2",
+		"@types/ws": "^8.5.3",
 		"copyfiles": "2.4.1",
 		"cross-env": "7.0.3",
 		"form-data": "^4.0.0",
