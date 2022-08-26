@@ -76,6 +76,7 @@
 		"README.md"
 	],
 	"dependencies": {
+		"@authenio/samlify-node-xmllint": "^2.0.0",
 		"@aws-sdk/client-ses": "^3.107.0",
 		"@directus/app": "workspace:*",
 		"@directus/drive": "workspace:*",
@@ -152,6 +153,7 @@
 		"rate-limiter-flexible": "^2.3.7",
 		"resolve-cwd": "^3.0.0",
 		"rollup": "^2.75.6",
+		"samlify": "^2.8.5",
 		"sanitize-html": "^2.7.0",
 		"sharp": "^0.30.6",
 		"snappy": "^7.1.1",
