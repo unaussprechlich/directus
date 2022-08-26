@@ -45,15 +45,21 @@ export abstract class SocketService {
 				const req = request as WebRequest;
 				logger.info('test ' + this.constructor.name + ' - ' + JSON.stringify(this.config));
 				if (!this.config.public) {
+					let accountability: Accountability | undefined;
 					// check token before upgrading when not set to public access
-					req.accountability = await getAccountabilityForToken(extractToken(request, query));
-					if (!req.accountability || !req.accountability.user /* || !accountability.role*/) {
+					try {
+						accountability = await getAccountabilityForToken(extractToken(request, query));
+					} catch (err: any) {
+						accountability = undefined;
+					}
+					if (!accountability || !accountability.user /* || !accountability.role*/) {
 						// do we need to check the role?
-						logger.debug('Websocket upgrade denied - ' + JSON.stringify(req.accountability));
+						logger.debug('Websocket upgrade denied - ' + JSON.stringify(accountability || 'invalid'));
 						socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
 						socket.destroy();
 						return;
 					}
+					req.accountability = accountability;
 				}
 				this.server.handleUpgrade(request, socket, head, (ws) => {
 					this.server.emit('connection', ws, req);

@@ -29,8 +29,8 @@ export class WebsocketService extends SocketService {
 		ws.addEventListener('open', (event: Event) => {
 			logger.debug(`[WS REST] open`, event);
 			this.clients.add(client);
-			this.handlers.forEach(({ onOpen }) => {
-				onOpen && onOpen(client, event);
+			this.handlers.forEach((handler) => {
+				handler.onOpen && handler.onOpen(client, event);
 			});
 		});
 		ws.addEventListener('message', async (event: MessageEvent) => {
@@ -42,9 +42,9 @@ export class WebsocketService extends SocketService {
 				logger.error(err);
 				client.send(err.message);
 			}
-			this.handlers.forEach(({ onMessage }) => {
+			this.handlers.forEach((handler) => {
 				try {
-					onMessage && onMessage(client, message);
+					handler.onMessage && handler.onMessage(client, message);
 				} catch (err: any) {
 					logger.error(err);
 					client.send(err.message);
@@ -54,15 +54,15 @@ export class WebsocketService extends SocketService {
 		ws.addEventListener('error', (event: Event) => {
 			logger.debug(`[WS REST] ${clientName} error`, event);
 			this.clients.delete(client);
-			this.handlers.forEach(({ onError }) => {
-				onError && onError(client, event);
+			this.handlers.forEach((handler) => {
+				handler.onError && handler.onError(client, event);
 			});
 		});
 		ws.addEventListener('close', (event: CloseEvent) => {
 			logger.debug(`[WS REST] ${clientName} closed`, event);
 			this.clients.delete(client);
-			this.handlers.forEach(({ onClose }) => {
-				onClose && onClose(client, event);
+			this.handlers.forEach((handler) => {
+				handler.onClose && handler.onClose(client, event);
 			});
 		});
 	}
@@ -70,10 +70,10 @@ export class WebsocketService extends SocketService {
 		this.handlers.add(handler);
 	}
 	public broadcast(message: WebsocketMessage, filter?: { user?: string; role?: string }) {
-		this.clients.forEach(({ accountability, send }) => {
-			if (filter && filter.user && filter.user !== accountability.user) return;
-			if (filter && filter.role && filter.role !== accountability.role) return;
-			send(message);
+		this.clients.forEach((client) => {
+			if (filter && filter.user && filter.user !== client.accountability.user) return;
+			if (filter && filter.role && filter.role !== client.accountability.role) return;
+			client.send(message);
 		});
 	}
 }
