@@ -1,6 +1,7 @@
 import http from 'http';
 import { CloseEvent, MessageEvent, WebSocket, Event } from 'ws';
 import logger from '../../logger';
+import { refreshAccountability } from './refresh-accountability';
 import { SocketService } from './socket';
 import { WebRequest, WebsocketClient, WebsocketExtension, WebsocketMessage } from './types';
 
@@ -38,18 +39,22 @@ export class WebsocketService extends SocketService {
 			let message: WebsocketMessage;
 			try {
 				message = JSON.parse(event.data as string);
+				client.accountability = await refreshAccountability(client.accountability);
 			} catch (err: any) {
-				logger.error(err);
+				// logger.error(err);
 				client.send(err.message);
+				return;
 			}
-			this.handlers.forEach((handler) => {
+			for (const handler of this.handlers) {
 				try {
-					handler.onMessage && handler.onMessage(client, message);
+					if (handler.onMessage) {
+						await handler.onMessage(client, message);
+					}
 				} catch (err: any) {
 					logger.error(err);
-					client.send(err.message);
+					client.send(JSON.stringify({ error: err.message }));
 				}
-			});
+			}
 		});
 		ws.addEventListener('error', (event: Event) => {
 			logger.debug(`[WS REST] ${clientName} error`, event);

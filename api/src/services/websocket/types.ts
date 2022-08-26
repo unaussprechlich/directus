@@ -17,7 +17,7 @@ export type WebsocketMessage = { type: string } & Record<string, any>;
 
 export interface WebsocketExtension {
 	onOpen?: (client: WebsocketClient, event: Event) => any;
-	onMessage?: (client: WebsocketClient, message: WebsocketMessage) => any;
+	onMessage?: (client: WebsocketClient, message: WebsocketMessage) => Promise<any>;
 	onError?: (client: WebsocketClient, event: Event) => any;
 	onClose?: (client: WebsocketClient, event: CloseEvent) => any;
 }
