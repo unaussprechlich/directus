@@ -49,12 +49,12 @@ subscription {
 		{
 			next: ({ data }) => {
 				// console.log(data);
-				const { message = '', date_created = '', user_created = '' } = data.chatMessagesCreated;
+				const { message = '', date_created = '', user_created = '' } = (data?.chatMessagesCreated || {}) as any;
 				document.getElementById(
 					'history'
 				)!.innerText += `\n\n${user_created?.first_name} ${user_created?.last_name} [${date_created}] ${message}`;
 			},
-			error: (err) => {
+			error: () => {
 				/*console.error(err)*/
 			},
 			complete: () => {
