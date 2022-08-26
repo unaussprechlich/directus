@@ -1,3 +1,4 @@
+import logger from '../../../logger';
 import { getSchema } from '../../../utils/get-schema';
 import { ItemsService } from '../../items';
 import { WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
@@ -60,6 +61,7 @@ export class ItemsHandler implements WebsocketExtension {
 				}
 				break;
 		}
+		logger.debug(`[WS REST] ItemsHandler ${JSON.stringify(message)}`);
 		client.send(responseMessage(result));
 	}
 }

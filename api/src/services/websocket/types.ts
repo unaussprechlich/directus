@@ -1,7 +1,7 @@
 /**
  * Types for websockets
  */
-import { Accountability } from '@directus/shared/types';
+import { Accountability, Query } from '@directus/shared/types';
 import { IncomingMessage } from 'http';
 import { CloseEvent, Event, WebSocket } from 'ws';
 
@@ -21,3 +21,9 @@ export interface WebsocketExtension {
 	onError?: (client: WebsocketClient, event: Event) => any;
 	onClose?: (client: WebsocketClient, event: CloseEvent) => any;
 }
+
+export type Subscription = {
+	query?: Query;
+	client: WebsocketClient;
+};
+export type SubscriptionMap = Record<string, Set<Subscription>>;

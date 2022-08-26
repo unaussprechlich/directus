@@ -1,14 +1,9 @@
 import { getSchema } from '../../../utils/get-schema';
 import { ItemsService } from '../../items';
-import { WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
+import { SubscriptionMap, WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
 import { ActionHandler, Query } from '@directus/shared/types';
 import emitter from '../../../emitter';
-
-type Subscription = {
-	query?: Query;
-	client: WebsocketClient;
-};
-type SubscriptionMap = Record<string, Set<Subscription>>;
+import logger from '../../../logger';
 
 export class SubscribeHandler implements WebsocketExtension {
 	subscriptions: SubscriptionMap;
@@ -33,7 +28,7 @@ export class SubscribeHandler implements WebsocketExtension {
 				message.action = event.split('.').pop();
 				message.collection = args.collection;
 				message.payload = args.payload;
-				// logger.debug(`[ WS ] event ${event} `/*- ${JSON.stringify(message)}`*/);
+				logger.debug(`[ WS ] event ${event} ` /*- ${JSON.stringify(message)}`*/);
 				this.dispatch(message.collection, message);
 			});
 		};
@@ -76,14 +71,14 @@ export class SubscribeHandler implements WebsocketExtension {
 					client.send(JSON.stringify({ payload }));
 				}
 			} catch (err: any) {
-				// ignore these permission errors
-				// logger.debug('[ WS ] permission error', err);
+				logger.debug(`[WS REST] ERROR ${JSON.stringify(err)}`);
 			}
 		}
 	}
 	async onMessage(client: WebsocketClient, message: WebsocketMessage) {
 		if (message.type !== 'subscribe') return;
 		const collection = message.collection!;
+		logger.debug(`[WS REST] SubscribeHandler ${JSON.stringify(message)}`);
 		const service = new ItemsService(collection, {
 			schema: await getSchema(),
 			accountability: client.accountability,
@@ -93,9 +88,8 @@ export class SubscribeHandler implements WebsocketExtension {
 			await service.readByQuery({ ...(message.query || {}), limit: 1 });
 			// subscribe to events if all went well
 			this.subscribe(collection, client, { query: message.query });
-			// logger.info(`subscribed - ${message.collection} #${message.id}`);
 		} catch (err: any) {
-			// eslint-disable-next-line no-empty
+			logger.debug(`[WS REST] ERROR ${JSON.stringify(err)}`);
 		}
 	}
 	onError(client: WebsocketClient) {
