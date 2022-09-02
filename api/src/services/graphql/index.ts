@@ -466,44 +466,46 @@ export class GraphQLService {
 							},
 						};
 
-						if (field.type === 'date') {
-							acc[`${field.field}_func`] = {
-								type: DateFunctions,
-								resolve: (obj: Record<string, any>) => {
-									const funcFields = Object.keys(DateFunctions.getFields()).map((key) => `${field.field}_${key}`);
-									return mapKeys(pick(obj, funcFields), (_value, key) => key.substring(field.field.length + 1));
-								},
-							};
-						}
+						if (action === 'read') {
+							if (field.type === 'date') {
+								acc[`${field.field}_func`] = {
+									type: DateFunctions,
+									resolve: (obj: Record<string, any>) => {
+										const funcFields = Object.keys(DateFunctions.getFields()).map((key) => `${field.field}_${key}`);
+										return mapKeys(pick(obj, funcFields), (_value, key) => key.substring(field.field.length + 1));
+									},
+								};
+							}
 
-						if (field.type === 'time') {
-							acc[`${field.field}_func`] = {
-								type: TimeFunctions,
-								resolve: (obj: Record<string, any>) => {
-									const funcFields = Object.keys(TimeFunctions.getFields()).map((key) => `${field.field}_${key}`);
-									return mapKeys(pick(obj, funcFields), (_value, key) => key.substring(field.field.length + 1));
-								},
-							};
-						}
+							if (field.type === 'time') {
+								acc[`${field.field}_func`] = {
+									type: TimeFunctions,
+									resolve: (obj: Record<string, any>) => {
+										const funcFields = Object.keys(TimeFunctions.getFields()).map((key) => `${field.field}_${key}`);
+										return mapKeys(pick(obj, funcFields), (_value, key) => key.substring(field.field.length + 1));
+									},
+								};
+							}
 
-						if (field.type === 'dateTime' || field.type === 'timestamp') {
-							acc[`${field.field}_func`] = {
-								type: DateTimeFunctions,
-								resolve: (obj: Record<string, any>) => {
-									const funcFields = Object.keys(DateTimeFunctions.getFields()).map((key) => `${field.field}_${key}`);
-									return mapKeys(pick(obj, funcFields), (_value, key) => key.substring(field.field.length + 1));
-								},
-							};
-						}
+							if (field.type === 'dateTime' || field.type === 'timestamp') {
+								acc[`${field.field}_func`] = {
+									type: DateTimeFunctions,
+									resolve: (obj: Record<string, any>) => {
+										const funcFields = Object.keys(DateTimeFunctions.getFields()).map((key) => `${field.field}_${key}`);
+										return mapKeys(pick(obj, funcFields), (_value, key) => key.substring(field.field.length + 1));
+									},
+								};
+							}
 
-						if (field.type === 'json' || field.type === 'alias') {
-							acc[`${field.field}_func`] = {
-								type: CountFunctions,
-								resolve: (obj: Record<string, any>) => {
-									const funcFields = Object.keys(CountFunctions.getFields()).map((key) => `${field.field}_${key}`);
-									return mapKeys(pick(obj, funcFields), (_value, key) => key.substring(field.field.length + 1));
-								},
-							};
+							if (field.type === 'json' || field.type === 'alias') {
+								acc[`${field.field}_func`] = {
+									type: CountFunctions,
+									resolve: (obj: Record<string, any>) => {
+										const funcFields = Object.keys(CountFunctions.getFields()).map((key) => `${field.field}_${key}`);
+										return mapKeys(pick(obj, funcFields), (_value, key) => key.substring(field.field.length + 1));
+									},
+								};
+							}
 						}
 
 						return acc;
@@ -2036,6 +2038,7 @@ export class GraphQLService {
 					const accountability = {
 						ip: req?.ip,
 						userAgent: req?.get('user-agent'),
+						origin: req?.get('origin'),
 						role: null,
 					};
 					const authenticationService = new AuthenticationService({
@@ -2069,6 +2072,7 @@ export class GraphQLService {
 					const accountability = {
 						ip: req?.ip,
 						userAgent: req?.get('user-agent'),
+						origin: req?.get('origin'),
 						role: null,
 					};
 					const authenticationService = new AuthenticationService({
@@ -2105,6 +2109,7 @@ export class GraphQLService {
 					const accountability = {
 						ip: req?.ip,
 						userAgent: req?.get('user-agent'),
+						origin: req?.get('origin'),
 						role: null,
 					};
 					const authenticationService = new AuthenticationService({
@@ -2129,6 +2134,7 @@ export class GraphQLService {
 					const accountability = {
 						ip: req?.ip,
 						userAgent: req?.get('user-agent'),
+						origin: req?.get('origin'),
 						role: null,
 					};
 					const service = new UsersService({ accountability, schema: this.schema });
@@ -2154,6 +2160,7 @@ export class GraphQLService {
 					const accountability = {
 						ip: req?.ip,
 						userAgent: req?.get('user-agent'),
+						origin: req?.get('origin'),
 						role: null,
 					};
 					const service = new UsersService({ accountability, schema: this.schema });
@@ -2761,6 +2768,7 @@ export class GraphQLService {
 							user: this.accountability?.user,
 							ip: this.accountability?.ip,
 							user_agent: this.accountability?.userAgent,
+							origin: this.accountability?.origin,
 						});
 
 						if ('directus_activity' in ReadCollectionTypes) {
