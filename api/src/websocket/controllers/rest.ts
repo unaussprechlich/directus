@@ -6,6 +6,7 @@ import env from '../../env';
 import { refreshAccountability } from '../utils';
 
 import SocketController from './base';
+import { ItemsHandler, SubscribeHandler } from '../../services/websocket/handlers';
 
 export class WebsocketController extends SocketController {
 	clients: Set<WebsocketClient>;
@@ -82,4 +83,18 @@ export class WebsocketController extends SocketController {
 			client.send(message);
 		});
 	}
+}
+
+let websocketController: WebsocketController | undefined;
+
+export function createWebsocketController(server: httpServer) {
+	if (env.WEBSOCKETS_REST_ENABLED) {
+		websocketController = new WebsocketController(server);
+		websocketController.registerExtension(new ItemsHandler());
+		websocketController.registerExtension(new SubscribeHandler());
+	}
+}
+
+export function getWebsocketController() {
+	return websocketController;
 }
