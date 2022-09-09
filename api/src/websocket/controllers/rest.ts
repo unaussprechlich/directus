@@ -6,7 +6,7 @@ import env from '../../env';
 import { refreshAccountability } from '../utils';
 
 import SocketController from './base';
-import { ItemsHandler, SubscribeHandler } from '../handlers';
+import { AuthHandler, HeartbeatHandler, ItemsHandler, SubscribeHandler } from '../handlers';
 
 export class WebsocketController extends SocketController {
 	clients: Set<WebsocketClient>;
@@ -90,6 +90,8 @@ let websocketController: WebsocketController | undefined;
 export function createWebsocketController(server: httpServer) {
 	if (env.WEBSOCKETS_REST_ENABLED) {
 		websocketController = new WebsocketController(server);
+		websocketController.registerExtension(new AuthHandler());
+		websocketController.registerExtension(new HeartbeatHandler());
 		websocketController.registerExtension(new ItemsHandler());
 		websocketController.registerExtension(new SubscribeHandler());
 		logger.info(`Websocket available at ws://${env.HOST}:${env.PORT}${websocketController.config.endpoint}`);

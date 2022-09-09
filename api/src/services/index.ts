@@ -31,5 +31,3 @@ export * from './users';
 export * from './utils';
 export * from './webhooks';
 export * from './shares';
-export * from './websocket/subscribe'; // do we want graphql subscriptions for extensions?
-export * from './websocket/websocket';

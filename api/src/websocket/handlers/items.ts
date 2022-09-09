@@ -2,13 +2,14 @@ import logger from '../../logger';
 import { getSchema } from '../../utils/get-schema';
 import { ItemsService } from '../../services/items';
 import { WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
+import { trimUpper } from '../utils/message';
 
 const errorMessage = (error: any) => JSON.stringify({ error });
 const responseMessage = (data: any) => JSON.stringify({ type: 'response', data });
 
 export class ItemsHandler implements WebsocketExtension {
 	async onMessage(client: WebsocketClient, message: WebsocketMessage) {
-		if (message.type !== 'items') return;
+		if (trimUpper(message.type) !== 'ITEMS') return;
 		if (!message.collection) {
 			return client.send(errorMessage('invalid collection'));
 		}

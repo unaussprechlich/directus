@@ -5,6 +5,7 @@ import { ActionHandler, Query } from '@directus/shared/types';
 import emitter from '../../emitter';
 import logger from '../../logger';
 import { refreshAccountability } from '../utils/refresh-accountability';
+import { trimUpper } from '../utils/message';
 
 export class SubscribeHandler implements WebsocketExtension {
 	subscriptions: SubscriptionMap;
@@ -71,7 +72,7 @@ export class SubscribeHandler implements WebsocketExtension {
 		}
 	}
 	async onMessage(client: WebsocketClient, message: WebsocketMessage) {
-		if (message.type !== 'subscribe') return;
+		if (!['SUBSCRIBE', 'UNSUBSCRIBE'].includes(trimUpper(message.type))) return;
 		const collection = message.collection!;
 		logger.debug(`[WS REST] SubscribeHandler ${JSON.stringify(message)}`);
 		const service = new ItemsService(collection, {
