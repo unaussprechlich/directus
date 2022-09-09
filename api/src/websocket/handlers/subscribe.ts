@@ -1,10 +1,10 @@
-import { getSchema } from '../../../utils/get-schema';
-import { ItemsService } from '../../items';
+import { getSchema } from '../../utils/get-schema';
+import { ItemsService } from '../../services/items';
 import { SubscriptionMap, WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
 import { ActionHandler, Query } from '@directus/shared/types';
-import emitter from '../../../emitter';
-import logger from '../../../logger';
-import { refreshAccountability } from '../refresh-accountability';
+import emitter from '../../emitter';
+import logger from '../../logger';
+import { refreshAccountability } from '../utils/refresh-accountability';
 
 export class SubscribeHandler implements WebsocketExtension {
 	subscriptions: SubscriptionMap;

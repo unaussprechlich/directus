@@ -1,6 +1,6 @@
-import logger from '../../../logger';
-import { getSchema } from '../../../utils/get-schema';
-import { ItemsService } from '../../items';
+import logger from '../../logger';
+import { getSchema } from '../../utils/get-schema';
+import { ItemsService } from '../../services/items';
 import { WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
 
 const errorMessage = (error: any) => JSON.stringify({ error });

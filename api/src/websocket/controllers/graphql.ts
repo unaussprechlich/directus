@@ -10,8 +10,8 @@ import SocketController from './base';
 export class GraphQLSubscriptionController extends SocketController {
 	constructor(httpServer: httpServer) {
 		super(httpServer, {
-			endpoint: 'WEBSOCKETS_GRAPHQL_PATH' in env ? env.WEBSOCKETS_GRAPHQL_PATH : '/graphql',
-			public: 'WEBSOCKETS_GRAPHQL_PUBLIC' in env ? env.WEBSOCKETS_GRAPHQL_PUBLIC : true,
+			endpoint: env.WEBSOCKETS_GRAPHQL_PATH ?? '/graphql',
+			public: env.WEBSOCKETS_GRAPHQL_PUBLIC ?? true,
 		});
 		// hook ws server into graphql logic
 		useGraphQLServer(
@@ -45,6 +45,7 @@ let subscriptionController: GraphQLSubscriptionController | undefined;
 export function createSubscriptionController(server: httpServer) {
 	if (env.WEBSOCKETS_GRAPHQL_ENABLED) {
 		subscriptionController = new GraphQLSubscriptionController(server);
+		logger.info(`Subscriptions available at ws://${env.HOST}:${env.PORT}${subscriptionController.config.endpoint}`);
 	}
 }
 

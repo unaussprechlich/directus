@@ -6,7 +6,7 @@ import env from '../../env';
 import { refreshAccountability } from '../utils';
 
 import SocketController from './base';
-import { ItemsHandler, SubscribeHandler } from '../../services/websocket/handlers';
+import { ItemsHandler, SubscribeHandler } from '../handlers';
 
 export class WebsocketController extends SocketController {
 	clients: Set<WebsocketClient>;
@@ -14,8 +14,8 @@ export class WebsocketController extends SocketController {
 
 	constructor(httpServer: httpServer) {
 		super(httpServer, {
-			endpoint: 'WEBSOCKETS_REST_PATH' in env ? env.WEBSOCKETS_REST_PATH : '/websocket',
-			public: 'WEBSOCKETS_REST_PUBLIC' in env ? env.WEBSOCKETS_REST_PUBLIC : false,
+			endpoint: env.WEBSOCKETS_REST_PATH ?? '/websocket',
+			public: env.WEBSOCKETS_REST_PUBLIC ?? false,
 		});
 		this.clients = new Set();
 		this.handlers = new Set();
@@ -92,6 +92,7 @@ export function createWebsocketController(server: httpServer) {
 		websocketController = new WebsocketController(server);
 		websocketController.registerExtension(new ItemsHandler());
 		websocketController.registerExtension(new SubscribeHandler());
+		logger.info(`Websocket available at ws://${env.HOST}:${env.PORT}${websocketController.config.endpoint}`);
 	}
 }
 
