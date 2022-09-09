@@ -2,31 +2,16 @@ import { Accountability } from '@directus/shared/types';
 import { IncomingMessage, Server as httpServer } from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
 import { parse } from 'url';
-import { SocketControllerConfig, WebRequest } from '../../services/websocket/types';
+import { SocketControllerConfig, WebRequest } from '../types';
 import logger from '../../logger';
 import { getAccountabilityForToken } from '../../utils/get-accountability-for-token';
 import internal from 'stream';
+import { extractToken } from '../utils';
 
 export const defaultSocketConfig: SocketControllerConfig = {
 	endpoint: '/websocket',
 	public: false,
 };
-
-export function extractToken(req: any, query: any): string | null {
-	if (query && query.access_token) {
-		return query.access_token as string;
-	}
-
-	let token: string | null = null;
-	if (req.headers && req.headers.authorization) {
-		const parts = req.headers.authorization.split(' ');
-
-		if (parts.length === 2 && parts[0].toLowerCase() === 'bearer') {
-			token = parts[1];
-		}
-	}
-	return token;
-}
 
 export default abstract class SocketController {
 	config: SocketControllerConfig;

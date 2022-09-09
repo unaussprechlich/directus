@@ -1,9 +1,9 @@
 import WebSocket from 'ws';
 import { Server as httpServer } from 'http';
-import { WebRequest, WebsocketClient, WebsocketExtension, WebsocketMessage } from '../../services/websocket/types';
+import { WebRequest, WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
 import logger from '../../logger';
 import env from '../../env';
-import { refreshAccountability } from '../../services/websocket/refresh-accountability';
+import { refreshAccountability } from '../utils';
 
 import SocketController from './base';
 
