@@ -14,7 +14,6 @@ export class HeartbeatHandler {
 	private controller: WebsocketController;
 
 	constructor() {
-		logger.debug('HeartbeatHandler');
 		this.controller = getWebsocketController();
 		emitter.onAction('websocket.message', ({ client, message }) => {
 			this.onMessage(client, message);

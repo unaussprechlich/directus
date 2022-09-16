@@ -7,3 +7,4 @@ export const stringify = (msg: any) => (typeof msg === 'string' ? msg : JSON.str
 export const fmtMessage = (type: string, data: Record<string, any> = {}) => {
 	return JSON.stringify({ type, ...data });
 };
+export const errorMessage = (error: any) => JSON.stringify({ error });

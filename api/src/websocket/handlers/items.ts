@@ -2,17 +2,19 @@ import logger from '../../logger';
 import { getSchema } from '../../utils/get-schema';
 import { ItemsService } from '../../services/items';
 import { WebsocketClient, WebsocketMessage } from '../types';
-import { trimUpper } from '../utils/message';
+import { errorMessage, trimUpper } from '../utils/message';
 import emitter from '../../emitter';
 
-const errorMessage = (error: any) => JSON.stringify({ error });
 const responseMessage = (data: any) => JSON.stringify({ type: 'response', data });
 
 export class ItemsHandler {
 	constructor() {
-		logger.debug('ItemsHandler');
 		emitter.onAction('websocket.message', ({ client, message }) => {
-			this.onMessage(client, message);
+			try {
+				this.onMessage(client, message);
+			} catch (err) {
+				client.send(errorMessage(err));
+			}
 		});
 	}
 	async onMessage(client: WebsocketClient, message: WebsocketMessage) {

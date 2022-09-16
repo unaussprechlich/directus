@@ -7,12 +7,11 @@ import { getSchema } from '../../utils/get-schema';
 export async function refreshAccountability(
 	accountability: Accountability | null | undefined
 ): Promise<Accountability> {
-	const user = accountability?.user || null;
 	const result = await getAccountabilityForRole(accountability?.role || null, {
 		accountability: accountability || null,
 		schema: await getSchema(),
 		database: getDatabase(),
 	});
-	result.user = user;
+	result.user = accountability?.user || null;
 	return result;
 }

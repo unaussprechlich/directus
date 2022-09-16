@@ -5,7 +5,7 @@ import { Query } from '@directus/shared/types';
 import emitter from '../../emitter';
 import logger from '../../logger';
 import { refreshAccountability } from '../utils/refresh-accountability';
-import { trimUpper } from '../utils/message';
+import { errorMessage, trimUpper } from '../utils/message';
 
 export class SubscribeHandler {
 	subscriptions: SubscriptionMap;
@@ -20,7 +20,11 @@ export class SubscribeHandler {
 	}
 	bindWebsocket() {
 		emitter.onAction('websocket.message', ({ client, message }) => {
-			this.onMessage(client, message);
+			try {
+				this.onMessage(client, message);
+			} catch (err) {
+				return client.send(errorMessage(err));
+			}
 		});
 		emitter.onAction('websocket.error', ({ client }) => this.unsubscribe(client));
 		emitter.onAction('websocket.close', ({ client }) => this.unsubscribe(client));

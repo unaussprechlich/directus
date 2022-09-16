@@ -4,8 +4,6 @@ import { stringify } from '../websocket/utils/message';
 import emitter from '../emitter';
 import { ActionHandler } from '@directus/shared/types';
 
-const EVENTS = ['connect', 'message', 'error', 'close'];
-
 export class WebsocketService {
 	private controller: WebsocketController;
 

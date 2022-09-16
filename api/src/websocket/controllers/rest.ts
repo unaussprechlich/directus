@@ -23,7 +23,7 @@ export class WebsocketController extends SocketController {
 	private createClient(ws: WebSocket, req: WebRequest) {
 		const client = ws as WebsocketClient;
 		client.accountability = req.accountability;
-		const clientName = client.accountability.user || 'public user';
+		const clientName = client.accountability?.user || 'public user';
 
 		ws.addEventListener('message', async (event: WebSocket.MessageEvent) => {
 			logger.debug(`[WS REST] ${clientName} message`, event);
