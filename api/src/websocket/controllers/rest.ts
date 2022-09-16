@@ -11,7 +11,7 @@ function getEnvConfig(): SocketControllerConfig {
 	const endpoint: string = env.WEBSOCKETS_REST_PATH;
 	const mode: 'strict' | 'public' | 'handshake' = env.WEBSOCKETS_REST_AUTH;
 	if (mode === 'handshake') {
-		const timeout = env.WEBSOCKETS_REST_AUTH_TIMEOUT;
+		const timeout = env.WEBSOCKETS_REST_AUTH_TIMEOUT * 1000;
 		return { endpoint, auth: { mode, timeout } };
 	} else {
 		return { endpoint, auth: { mode } };

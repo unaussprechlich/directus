@@ -8,6 +8,9 @@ import { getAccountabilityForToken } from '../../utils/get-accountability-for-to
 import internal from 'stream';
 import { extractToken } from '../utils';
 import emitter from '../../emitter';
+import { waitForMessage } from '../utils/wait-for-message';
+import { trimUpper } from '../utils/message';
+import { getAccountability } from '../utils/get-accountability';
 
 export const defaultSocketConfig: SocketControllerConfig = {
 	endpoint: '/websocket',
@@ -48,6 +51,9 @@ export default abstract class SocketController {
 			this.server.handleUpgrade(request, socket, head, async (ws) => {
 				try {
 					const _req = await emitter.emitFilter('websocket.upgrade', req, { config: this.config });
+					if (this.config.auth.mode === 'handshake') {
+						await this.handleHandshake(ws, this.config.auth.timeout);
+					}
 					this.server.emit('connection', ws, _req);
 				} catch (error: any) {
 					// logger.error('upgrade stopped ', JSON.stringify(error));
@@ -56,6 +62,27 @@ export default abstract class SocketController {
 				}
 			});
 		}
+	}
+	private async handleHandshake(client: WebSocket.WebSocket, timeout: number) {
+		const payload = await waitForMessage(client, timeout)
+			.then((data: any) => data as Record<string, any>)
+			.catch(() => {
+				throw new Error('Failed handshake.');
+			});
+		if (!payload) throw new Error('Failed handshake.');
+		if (trimUpper(payload.type) !== 'HANDSHAKE') {
+			throw new Error('Failed handshake.');
+		}
+		if (payload.access_token) {
+			return await getAccountability(payload.access_token);
+		}
+		if (payload.email && payload.password) {
+			return await getAccountability({
+				email: payload.email,
+				password: payload.password,
+			});
+		}
+		throw new Error('Failed handshake.');
 	}
 	terminate() {
 		this.server.clients.forEach((ws) => {
