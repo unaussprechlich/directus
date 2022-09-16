@@ -18,8 +18,8 @@ import {
 	createWebsocketController,
 	getSubscriptionController,
 	getWebsocketController,
-	startWebsocketHandlers,
-} from './websocket';
+} from './websocket/controllers';
+import { startWebsocketHandlers } from './websocket/handlers';
 
 export async function createServer(): Promise<http.Server> {
 	const server = http.createServer(await createApp());

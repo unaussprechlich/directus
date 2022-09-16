@@ -1,8 +1,7 @@
 import emitter from '../../emitter';
 import { fmtMessage, trimUpper } from '../utils/message';
 import { WebsocketClient, WebsocketMessage } from '../types';
-import { WebsocketController } from '../controllers';
-import { getWebsocketController } from '..';
+import { WebsocketController, getWebsocketController } from '../controllers';
 import { ActionHandler } from '@directus/shared/types';
 import logger from '../../logger';
 import env from '../../env';
