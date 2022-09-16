@@ -6,7 +6,14 @@ import { WebSocket } from 'ws';
 
 export type SocketControllerConfig = {
 	endpoint: string; // endpoint for request upgrade
-	public: boolean; // whether to require auth before upgrading
+	auth:
+		| {
+				mode: 'public' | 'strict';
+		  }
+		| {
+				mode: 'handshake';
+				timeout: number;
+		  };
 };
 
 export type WebsocketClient = WebSocket & { accountability: Accountability };

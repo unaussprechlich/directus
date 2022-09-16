@@ -6,13 +6,22 @@ import { getSchema } from '../../utils/get-schema';
 import { GraphQLService } from '../../services';
 import env from '../../env';
 import SocketController from './base';
+import { SocketControllerConfig } from '../types';
+
+function getEnvConfig(): SocketControllerConfig {
+	const endpoint: string = env.WEBSOCKETS_GRAPHQL_PATH;
+	const mode: 'strict' | 'public' | 'handshake' = env.WEBSOCKETS_GRAPHQL_AUTH;
+	if (mode === 'handshake') {
+		const timeout = env.WEBSOCKETS_GRAPHQL_AUTH_TIMEOUT;
+		return { endpoint, auth: { mode, timeout } };
+	} else {
+		return { endpoint, auth: { mode } };
+	}
+}
 
 export class GraphQLSubscriptionController extends SocketController {
 	constructor(httpServer: httpServer) {
-		super(httpServer, {
-			endpoint: env.WEBSOCKETS_GRAPHQL_PATH ?? '/graphql',
-			public: env.WEBSOCKETS_GRAPHQL_PUBLIC ?? true,
-		});
+		super(httpServer, getEnvConfig());
 		// hook ws server into graphql logic
 		useGraphQLServer(
 			{

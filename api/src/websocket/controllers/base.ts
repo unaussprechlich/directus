@@ -11,7 +11,7 @@ import emitter from '../../emitter';
 
 export const defaultSocketConfig: SocketControllerConfig = {
 	endpoint: '/websocket',
-	public: false,
+	auth: { mode: 'strict' },
 };
 
 export default abstract class SocketController {
@@ -28,13 +28,12 @@ export default abstract class SocketController {
 		const { pathname, query } = parse(request.url!, true);
 		if (pathname === this.config.endpoint) {
 			const req = request as WebRequest;
-			// logger.info('test ' + JSON.stringify(this.config));
-			if (!this.config.public) {
+			if (this.config.auth.mode === 'strict') {
 				let accountability: Accountability | undefined;
 				// check token before upgrading when not set to public access
 				try {
 					accountability = await getAccountabilityForToken(extractToken(request, query));
-				} catch (err: any) {
+				} catch {
 					accountability = undefined;
 				}
 				if (!accountability || !accountability.user) {

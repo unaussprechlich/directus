@@ -1,20 +1,28 @@
 import WebSocket from 'ws';
 import { Server as httpServer } from 'http';
-import { WebRequest, WebsocketClient, WebsocketMessage } from '../types';
+import { SocketControllerConfig, WebRequest, WebsocketClient, WebsocketMessage } from '../types';
 import logger from '../../logger';
 import env from '../../env';
 import { refreshAccountability } from '../utils';
 import SocketController from './base';
 import emitter from '../../emitter';
 
+function getEnvConfig(): SocketControllerConfig {
+	const endpoint: string = env.WEBSOCKETS_REST_PATH;
+	const mode: 'strict' | 'public' | 'handshake' = env.WEBSOCKETS_REST_AUTH;
+	if (mode === 'handshake') {
+		const timeout = env.WEBSOCKETS_REST_AUTH_TIMEOUT;
+		return { endpoint, auth: { mode, timeout } };
+	} else {
+		return { endpoint, auth: { mode } };
+	}
+}
+
 export class WebsocketController extends SocketController {
 	clients: Set<WebsocketClient>;
 
 	constructor(httpServer: httpServer) {
-		super(httpServer, {
-			endpoint: env.WEBSOCKETS_REST_PATH ?? '/websocket',
-			public: env.WEBSOCKETS_REST_PUBLIC ?? false,
-		});
+		super(httpServer, getEnvConfig());
 		this.clients = new Set();
 		this.server.on('connection', (ws: WebSocket, req: WebRequest) => {
 			this.createClient(ws, req);
