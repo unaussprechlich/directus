@@ -1,16 +1,14 @@
 import WebSocket from 'ws';
 import { Server as httpServer } from 'http';
-import { WebRequest, WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
+import { WebRequest, WebsocketClient, WebsocketMessage } from '../types';
 import logger from '../../logger';
 import env from '../../env';
 import { refreshAccountability } from '../utils';
-
 import SocketController from './base';
-import { AuthHandler, HeartbeatHandler, ItemsHandler, SubscribeHandler } from '../handlers';
+import emitter from '../../emitter';
 
 export class WebsocketController extends SocketController {
 	clients: Set<WebsocketClient>;
-	handlers: Set<WebsocketExtension>;
 
 	constructor(httpServer: httpServer) {
 		super(httpServer, {
@@ -18,7 +16,6 @@ export class WebsocketController extends SocketController {
 			public: env.WEBSOCKETS_REST_PUBLIC ?? false,
 		});
 		this.clients = new Set();
-		this.handlers = new Set();
 		this.server.on('connection', (ws: WebSocket, req: WebRequest) => {
 			this.createClient(ws, req);
 		});
@@ -28,76 +25,40 @@ export class WebsocketController extends SocketController {
 		client.accountability = req.accountability;
 		const clientName = client.accountability.user || 'public user';
 
-		logger.debug(`[WS REST] ${clientName} connected`);
-		ws.addEventListener('open', (event: WebSocket.Event) => {
-			logger.debug(`[WS REST] open`, event);
-			this.clients.add(client);
-			this.handlers.forEach((handler) => {
-				handler.onOpen && handler.onOpen(client, event);
-			});
-		});
 		ws.addEventListener('message', async (event: WebSocket.MessageEvent) => {
 			logger.debug(`[WS REST] ${clientName} message`, event);
 			let message: WebsocketMessage;
 			try {
-				message = JSON.parse(event.data as string);
+				message = await emitter.emitFilter('websocket.message', JSON.parse(event.data as string), {
+					client,
+					config: this.config,
+				});
 				client.accountability = await refreshAccountability(client.accountability);
 			} catch (err: any) {
-				// logger.error(err);
+				logger.error(err);
 				client.send(err.message);
 				return;
 			}
-			for (const handler of this.handlers) {
-				try {
-					if (handler.onMessage) {
-						await handler.onMessage(client, message);
-					}
-				} catch (err: any) {
-					logger.error(err);
-					client.send(JSON.stringify({ error: err.message }));
-				}
+			try {
+				emitter.emitAction('websocket.message', { message, client, config: this.config });
+			} catch (err: any) {
+				logger.error(err);
+				client.send(JSON.stringify({ error: err.message }));
 			}
 		});
 		ws.addEventListener('error', (event: WebSocket.Event) => {
 			logger.debug(`[WS REST] ${clientName} error`, event);
 			this.clients.delete(client);
-			this.handlers.forEach((handler) => {
-				handler.onError && handler.onError(client, event);
-			});
+			emitter.emitAction('websocket.error', { client, config: this.config });
 		});
 		ws.addEventListener('close', (event: WebSocket.CloseEvent) => {
 			logger.debug(`[WS REST] ${clientName} closed`, event);
 			this.clients.delete(client);
-			this.handlers.forEach((handler) => {
-				handler.onClose && handler.onClose(client, event);
-			});
+			emitter.emitAction('websocket.close', { client, config: this.config });
 		});
+		// client connected
+		logger.debug(`[WS REST] ${clientName} connected`);
+		this.clients.add(client);
+		emitter.emitAction('websocket.connect', { client, config: this.config });
 	}
-	public registerExtension(handler: WebsocketExtension) {
-		this.handlers.add(handler);
-	}
-	public broadcast(message: WebsocketMessage, filter?: { user?: string; role?: string }) {
-		this.clients.forEach((client) => {
-			if (filter && filter.user && filter.user !== client.accountability.user) return;
-			if (filter && filter.role && filter.role !== client.accountability.role) return;
-			client.send(message);
-		});
-	}
-}
-
-let websocketController: WebsocketController | undefined;
-
-export function createWebsocketController(server: httpServer) {
-	if (env.WEBSOCKETS_REST_ENABLED) {
-		websocketController = new WebsocketController(server);
-		websocketController.registerExtension(new AuthHandler());
-		websocketController.registerExtension(new HeartbeatHandler());
-		websocketController.registerExtension(new ItemsHandler());
-		websocketController.registerExtension(new SubscribeHandler());
-		logger.info(`Websocket available at ws://${env.HOST}:${env.PORT}${websocketController.config.endpoint}`);
-	}
-}
-
-export function getWebsocketController() {
-	return websocketController;
 }

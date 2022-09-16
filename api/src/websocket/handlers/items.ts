@@ -1,13 +1,20 @@
 import logger from '../../logger';
 import { getSchema } from '../../utils/get-schema';
 import { ItemsService } from '../../services/items';
-import { WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
+import { WebsocketClient, WebsocketMessage } from '../types';
 import { trimUpper } from '../utils/message';
+import emitter from '../../emitter';
 
 const errorMessage = (error: any) => JSON.stringify({ error });
 const responseMessage = (data: any) => JSON.stringify({ type: 'response', data });
 
-export class ItemsHandler implements WebsocketExtension {
+export class ItemsHandler {
+	constructor() {
+		logger.debug('ItemsHandler');
+		emitter.onAction('websocket.message', ({ client, message }) => {
+			this.onMessage(client, message);
+		});
+	}
 	async onMessage(client: WebsocketClient, message: WebsocketMessage) {
 		if (trimUpper(message.type) !== 'ITEMS') return;
 		if (!message.collection) {

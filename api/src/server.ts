@@ -18,6 +18,7 @@ import {
 	createWebsocketController,
 	getSubscriptionController,
 	getWebsocketController,
+	startWebsocketHandlers,
 } from './websocket';
 
 export async function createServer(): Promise<http.Server> {
@@ -90,6 +91,7 @@ export async function createServer(): Promise<http.Server> {
 	if (env.WEBSOCKETS_ENABLED) {
 		createSubscriptionController(server);
 		createWebsocketController(server);
+		startWebsocketHandlers();
 	}
 
 	const terminusOptions: TerminusOptions = {

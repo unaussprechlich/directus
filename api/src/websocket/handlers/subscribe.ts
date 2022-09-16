@@ -1,31 +1,33 @@
 import { getSchema } from '../../utils/get-schema';
 import { ItemsService } from '../../services/items';
-import { SubscriptionMap, WebsocketClient, WebsocketExtension, WebsocketMessage } from '../types';
-import { ActionHandler, Query } from '@directus/shared/types';
+import { SubscriptionMap, WebsocketClient, WebsocketMessage } from '../types';
+import { Query } from '@directus/shared/types';
 import emitter from '../../emitter';
 import logger from '../../logger';
 import { refreshAccountability } from '../utils/refresh-accountability';
 import { trimUpper } from '../utils/message';
 
-export class SubscribeHandler implements WebsocketExtension {
+export class SubscribeHandler {
 	subscriptions: SubscriptionMap;
+
 	constructor() {
 		this.subscriptions = {};
-		const dispatchAction = this.buildDispatcher(
-			(event: string, handler: ActionHandler) => emitter.onAction(event, handler) /*, logger*/
-		);
-		[
+		this.bindWebsocket();
+		this.bindModules([
 			'items' /*, 'activity', 'collections', 'fields', 'folders', 'permissions',
 			'presets', 'relations', 'revisions', 'roles', 'settings', 'users', 'webhooks'*/,
-		].forEach((collection) => {
-			dispatchAction(collection + '.create', ({ key }: any) => ({ key }));
-			dispatchAction(collection + '.update', ({ keys }: any) => ({ keys }));
-			dispatchAction(collection + '.delete');
-		});
+		]);
 	}
-	buildDispatcher(action: any /*, logger: Logger*/) {
-		return (event: string, mutator?: (args: any) => any) => {
-			action(event, async (args: any) => {
+	bindWebsocket() {
+		emitter.onAction('websocket.message', ({ client, message }) => {
+			this.onMessage(client, message);
+		});
+		emitter.onAction('websocket.error', ({ client }) => this.unsubscribe(client));
+		emitter.onAction('websocket.close', ({ client }) => this.unsubscribe(client));
+	}
+	bindModules(modules: string[]) {
+		const bindAction = (event: string, mutator?: (args: any) => any) => {
+			emitter.onAction(event, async (args: any) => {
 				const message = mutator ? mutator(args) : {};
 				message.action = event.split('.').pop();
 				message.collection = args.collection;
@@ -34,6 +36,11 @@ export class SubscribeHandler implements WebsocketExtension {
 				this.dispatch(message.collection, message);
 			});
 		};
+		for (const module of modules) {
+			bindAction(module + '.create', ({ key }: any) => ({ key }));
+			bindAction(module + '.update', ({ keys }: any) => ({ keys }));
+			bindAction(module + '.delete');
+		}
 	}
 	subscribe(collection: string, client: WebsocketClient, conf: { query?: Query } = {}) {
 		if (!this.subscriptions[collection]) this.subscriptions[collection] = new Set();
@@ -41,19 +48,19 @@ export class SubscribeHandler implements WebsocketExtension {
 	}
 	unsubscribe(client: WebsocketClient) {
 		for (const key of Object.keys(this.subscriptions)) {
-			const subs = Array.from(this.subscriptions[key] || []);
-			for (let i = subs.length - 1; i >= 0; i--) {
-				const sub = subs[i];
-				if (!sub) continue;
-				if (sub.client === client) {
-					this.subscriptions[key]?.delete(sub);
+			const subscriptions = Array.from(this.subscriptions[key] || []);
+			for (let i = subscriptions.length - 1; i >= 0; i--) {
+				const subscription = subscriptions[i];
+				if (!subscription) continue;
+				if (subscription.client === client) {
+					this.subscriptions[key]?.delete(subscription);
 				}
 			}
 		}
 	}
 	async dispatch(collection: string, data: any) {
-		const subs = this.subscriptions[collection] ?? new Set();
-		for (const { client, query = {} } of subs) {
+		const subscriptions = this.subscriptions[collection] ?? new Set();
+		for (const { client, query = {} } of subscriptions) {
 			client.accountability = await refreshAccountability(client.accountability);
 			const service = new ItemsService(collection, {
 				schema: await getSchema({ accountability: client.accountability }),
@@ -87,11 +94,5 @@ export class SubscribeHandler implements WebsocketExtension {
 		} catch (err: any) {
 			logger.debug(`[WS REST] ERROR ${JSON.stringify(err)}`);
 		}
-	}
-	onError(client: WebsocketClient) {
-		this.unsubscribe(client);
-	}
-	onClose(client: WebsocketClient) {
-		this.unsubscribe(client);
 	}
 }

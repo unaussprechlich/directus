@@ -39,16 +39,3 @@ export class GraphQLSubscriptionController extends SocketController {
 		});
 	}
 }
-
-let subscriptionController: GraphQLSubscriptionController | undefined;
-
-export function createSubscriptionController(server: httpServer) {
-	if (env.WEBSOCKETS_GRAPHQL_ENABLED) {
-		subscriptionController = new GraphQLSubscriptionController(server);
-		logger.info(`Subscriptions available at ws://${env.HOST}:${env.PORT}${subscriptionController.config.endpoint}`);
-	}
-}
-
-export function getSubscriptionController() {
-	return subscriptionController;
-}

@@ -1,6 +1,13 @@
 import { ActionHandler, EventContext, FilterHandler, InitHandler } from '@directus/shared/types';
 import { EventEmitter2 } from 'eventemitter2';
+import getDatabase from './database';
 import logger from './logger';
+
+export const defaultEventContext: EventContext = {
+	database: getDatabase(),
+	accountability: null,
+	schema: null,
+};
 
 export class Emitter {
 	private filterEmitter;
@@ -26,7 +33,7 @@ export class Emitter {
 		event: string | string[],
 		payload: T,
 		meta: Record<string, any>,
-		context: EventContext
+		context: EventContext = defaultEventContext
 	): Promise<T> {
 		const events = Array.isArray(event) ? event : [event];
 		const eventListeners = events.map((event) => ({
@@ -48,7 +55,11 @@ export class Emitter {
 		return updatedPayload;
 	}
 
-	public emitAction(event: string | string[], meta: Record<string, any>, context: EventContext): void {
+	public emitAction(
+		event: string | string[],
+		meta: Record<string, any>,
+		context: EventContext = defaultEventContext
+	): void {
 		const events = Array.isArray(event) ? event : [event];
 
 		for (const event of events) {

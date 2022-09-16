@@ -7,6 +7,7 @@ import logger from '../../logger';
 import { getAccountabilityForToken } from '../../utils/get-accountability-for-token';
 import internal from 'stream';
 import { extractToken } from '../utils';
+import emitter from '../../emitter';
 
 export const defaultSocketConfig: SocketControllerConfig = {
 	endpoint: '/websocket',
@@ -45,8 +46,17 @@ export default abstract class SocketController {
 				}
 				req.accountability = accountability;
 			}
-			this.server.handleUpgrade(request, socket, head, (ws) => {
-				this.server.emit('connection', ws, req);
+
+			// await emitter.onFilter('xD')
+			this.server.handleUpgrade(request, socket, head, async (ws) => {
+				try {
+					const _req = await emitter.emitFilter('websocket.upgrade', req, { config: this.config });
+					this.server.emit('connection', ws, _req);
+				} catch (error: any) {
+					logger.error('upgrade stopped', error);
+					ws.send(JSON.stringify({ error: error.message }));
+					ws.close();
+				}
 			});
 		}
 	}
