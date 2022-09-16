@@ -103,7 +103,11 @@ document.getElementById('connect-btn').addEventListener('click', function () {
         document.getElementById('connect').classList.remove('hidden');
     });
     ws.addEventListener('message', function (event) {
-        addLog('Received: '+JSON.stringify(JSON.parse(event.data), null, 2));
+        const msg = JSON.parse(event.data);
+        addLog('Received: '+JSON.stringify(msg, null, 2));
+        if (msg?.type?.trim().toUpperCase() === 'PING') {
+            sendMessage({ type: 'pong' });
+        }
     });
     document.getElementById('connect-btn')
 });
