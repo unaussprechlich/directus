@@ -381,7 +381,7 @@ importers:
     specifiers:
       '@babel/core': ^7.18.13
       '@babel/preset-env': ^7.18.10
-      '@directus/docs': 9.17.0
+      '@directus/docs': 9.18.1
       '@directus/extensions-sdk': ^9.14.1
       '@directus/format-title': ^9.15.0
       '@directus/shared': workspace:*
@@ -501,9 +501,9 @@ importers:
       webpack: ^5.74.0
       wellknown: 0.5.0
     devDependencies:
-      '@babel/core': 7.19.0
-      '@babel/preset-env': 7.18.10_@babel+core@7.19.0
-      '@directus/docs': 9.17.0
+      '@babel/core': 7.18.13
+      '@babel/preset-env': 7.18.10_@babel+core@7.18.13
+      '@directus/docs': 9.18.1
       '@directus/extensions-sdk': link:../packages/extensions-sdk
       '@directus/format-title': 9.15.0
       '@directus/shared': link:../packages/shared
@@ -3785,9 +3785,9 @@ packages:
       '@jridgewell/trace-mapping': 0.3.9
     dev: true
 
-  /@directus/docs/9.17.0:
+  /@directus/docs/9.18.1:
     resolution:
-      { integrity: sha512-04GQluhaOciWfZC8p5Fe9fiZk6AvaP2cVCTXN97cDviwf0I8Vq06Rkacg21V7fy+CVrRop3xt4jbETzdKnqXFg== }
+      { integrity: sha512-BOB7R119Tm+aGSWMYyLpryqrOUgTg3rU4ymOI3IutQOTrihbs2ppeNkBWO6GwXQFGtgg8qK+toTRRTZ03iP1nA== }
     dev: true
 
   /@directus/format-title/9.15.0:
