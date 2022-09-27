@@ -1,6 +1,6 @@
-import { Type } from './fields';
-import { Relation } from './relations';
-import { Filter } from './filter';
+import type { Type } from './fields.js';
+import type { Relation } from './relations.js';
+import type { Filter } from './filter.js';
 
 export type FieldOverview = {
 	field: string;
@@ -17,21 +17,24 @@ export type FieldOverview = {
 	alias: boolean;
 };
 
-export type CollectionsOverview = {
-	[name: string]: {
-		collection: string;
-		primary: string;
-		singleton: boolean;
-		sortField: string | null;
-		note: string | null;
-		accountability: 'all' | 'activity' | null;
-		fields: {
-			[name: string]: FieldOverview;
-		};
-	};
-};
+export type CollectionOverview = {
+	collection: string;
+	primary: string;
+	singleton: boolean;
+	sortField: string | null;
+	note: string | null;
+	accountability: 'all' | 'activity' | null;
+}
 
 export type SchemaOverview = {
-	collections: CollectionsOverview;
-	relations: Relation[];
+	getCollections: () => Promise<Record<string, CollectionOverview>>
+	getCollection: (collection: string) => Promise<CollectionOverview | null>
+	getFields: (collection: string) => Promise<Record<string, FieldOverview>>
+	getField: (collection: string, field: string) => Promise<FieldOverview | null>
+	getRelations: () => Promise<Relation[]>
+	getRelationsForCollection: (collection: string) => Promise<Record<string, Relation>>
+	getRelationsForField: (collection: string, field: string) => Promise<Relation | null>
+	getPrimaryKeyField: (collection: string) => Promise<FieldOverview | null>
+	hasCollection: (collection: string) => Promise<boolean>
+	hasField: (collection: string, field: string) => Promise<boolean>
 };

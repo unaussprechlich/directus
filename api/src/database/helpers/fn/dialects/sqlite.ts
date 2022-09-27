@@ -1,5 +1,5 @@
-import { FnHelper, FnHelperOptions } from '../types';
-import { Knex } from 'knex';
+import { FnHelper, FnHelperOptions } from '../types.js';
+import type { Knex } from 'knex';
 
 const parseLocaltime = (columnType?: string) => {
 	if (columnType === 'timestamp') {
@@ -65,15 +65,15 @@ export class FnHelperSQLite extends FnHelper {
 		]);
 	}
 
-	count(table: string, column: string, options?: FnHelperOptions): Knex.Raw<any> {
-		const type = this.schema.collections?.[table]?.fields?.[column]?.type ?? 'unknown';
+	async count(table: string, column: string, options?: FnHelperOptions): Promise<Knex.Raw<any>> {
+		const type = (await this.schema.getField(table, column))?.type ?? 'unknown';
 
 		if (type === 'json') {
 			return this.knex.raw(`json_array_length(??.??, '$')`, [table, column]);
 		}
 
 		if (type === 'alias') {
-			return this._relationalCount(table, column, options);
+			return await this._relationalCount(table, column, options);
 		}
 
 		throw new Error(`Couldn't extract type from ${table}.${column}`);

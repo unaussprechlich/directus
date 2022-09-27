@@ -1,6 +1,7 @@
 {
 	"name": "@directus/app",
 	"version": "9.18.1",
+	"type": "module",
 	"private": false,
 	"description": "Directus is an Open-Source Headless CMS & API for Managing Custom Databases",
 	"author": "Rijk van Zanten <rijkvanzanten@me.com>",

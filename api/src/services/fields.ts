@@ -1,27 +1,28 @@
 import SchemaInspector from '@directus/schema';
 import { REGEX_BETWEEN_PARENS } from '@directus/shared/constants';
-import { Accountability, Field, FieldMeta, RawField, SchemaOverview, Type } from '@directus/shared/types';
+import type { Accountability, Field, FieldMeta, RawField, SchemaOverview, Type } from '@directus/shared/types';
 import { addFieldFlag, toArray } from '@directus/shared/utils';
-import Keyv from 'keyv';
-import { Knex } from 'knex';
-import { Column } from 'knex-schema-inspector/dist/types/column';
-import { isEqual, isNil } from 'lodash';
-import { clearSystemCache, getCache } from '../cache';
-import { ALIAS_TYPES } from '../constants';
-import getDatabase, { getSchemaInspector } from '../database';
-import { getHelpers, Helpers } from '../database/helpers';
-import { systemFieldRows } from '../database/system-data/fields/';
-import emitter from '../emitter';
-import env from '../env';
-import { ForbiddenException, InvalidPayloadException } from '../exceptions';
-import { translateDatabaseError } from '../exceptions/database/translate';
-import { ItemsService } from '../services/items';
-import { PayloadService } from '../services/payload';
-import { AbstractServiceOptions } from '../types';
-import getDefaultValue from '../utils/get-default-value';
-import getLocalType from '../utils/get-local-type';
-import { RelationsService } from './relations';
+import type { Knex } from 'knex';
+import type { Column } from 'knex-schema-inspector/dist/types/column';
+import { isEqual, isNil } from 'lodash-es';
+import { getCache } from '../cache.js';
+import { ALIAS_TYPES } from '../constants.js';
+import getDatabase, { getSchemaInspector } from '../database/index.js';
+import { getHelpers, Helpers } from '../database/helpers/index.js';
+import { systemFieldRows } from '../database/system-data/fields/index.js';
+import emitter from '../emitter.js';
+import env from '../env.js';
+import { ForbiddenException, InvalidPayloadException } from '../exceptions/index.js';
+import { translateDatabaseError } from '../exceptions/database/translate.js';
+import { ItemsService } from '../services/items.js';
+import { PayloadService } from '../services/payload.js';
+import type { AbstractServiceOptions } from '../types/index.js';
+import getDefaultValue from '../utils/get-default-value.js';
+import getLocalType from '../utils/get-local-type.js';
+import { RelationsService } from './relations.js';
 import { KNEX_TYPES } from '@directus/shared/constants';
+import type { CacheService } from './cache/cache.js';
+import { clearField } from '../utils/clearSystemCache.js';
 
 export class FieldsService {
 	knex: Knex;
@@ -31,8 +32,8 @@ export class FieldsService {
 	payloadService: PayloadService;
 	schemaInspector: ReturnType<typeof SchemaInspector>;
 	schema: SchemaOverview;
-	cache: Keyv<any> | null;
-	systemCache: Keyv<any>;
+	cache: CacheService | null;
+	systemCache: CacheService;
 
 	constructor(options: AbstractServiceOptions) {
 		this.knex = options.knex || getDatabase();
@@ -79,12 +80,12 @@ export class FieldsService {
 			fields.push(...systemFieldRows);
 		}
 
-		const columns = (await this.schemaInspector.columnInfo(collection)).map((column) => ({
+		const columns = (await this.schemaInspector.columnInfo(collection)).map((column: any) => ({
 			...column,
 			default_value: getDefaultValue(column),
 		}));
 
-		const columnsWithSystem = columns.map((column) => {
+		const columnsWithSystem = columns.map((column: any) => {
 			const field = fields.find((field) => {
 				return field.field === column.name && field.collection === column.table;
 			});
@@ -140,7 +141,7 @@ export class FieldsService {
 			return data;
 		}) as Field[];
 
-		const knownCollections = Object.keys(this.schema.collections);
+		const knownCollections = Object.keys(await this.schema.getCollections());
 
 		const result = [...columnsWithSystem, ...aliasFieldsAsField].filter((field) =>
 			knownCollections.includes(field.collection)
@@ -165,8 +166,8 @@ export class FieldsService {
 			return result.filter((field) => {
 				if (field.collection in allowedFieldsInCollection === false) return false;
 				const allowedFields = allowedFieldsInCollection[field.collection];
-				if (allowedFields[0] === '*') return true;
-				return allowedFields.includes(field.field);
+				if (allowedFields?.[0] === '*') return true;
+				return allowedFields?.includes(field.field);
 			});
 		}
 
@@ -251,7 +252,7 @@ export class FieldsService {
 
 		try {
 			const exists =
-				field.field in this.schema.collections[collection].fields ||
+				await this.schema.hasField(collection, field.field) ||
 				isNil(
 					await this.knex.select('id').from('directus_fields').where({ collection, field: field.field }).first()
 				) === false;
@@ -327,11 +328,11 @@ export class FieldsService {
 				await this.helpers.schema.postColumnChange();
 			}
 
-			if (this.cache && env.CACHE_AUTO_PURGE) {
+			if (this.cache && env['CACHE_AUTO_PURGE']) {
 				await this.cache.clear();
 			}
 
-			await clearSystemCache();
+			await this.systemCache.setHashFull(`fields:${collection}`, false);
 		}
 	}
 
@@ -419,11 +420,11 @@ export class FieldsService {
 				await this.helpers.schema.postColumnChange();
 			}
 
-			if (this.cache && env.CACHE_AUTO_PURGE) {
+			if (this.cache && env['CACHE_AUTO_PURGE']) {
 				await this.cache.clear();
 			}
 
-			await clearSystemCache();
+			await clearField(collection, field.field);
 		}
 	}
 
@@ -449,7 +450,9 @@ export class FieldsService {
 			);
 
 			await this.knex.transaction(async (trx) => {
-				const relations = this.schema.relations.filter((relation) => {
+				const collectionRelations = Object.values(await this.schema.getRelationsForCollection(collection));
+
+				const relations = collectionRelations.filter((relation) => {
 					return (
 						(relation.collection === collection && relation.field === field) ||
 						(relation.related_collection === collection && relation.meta?.one_field === field)
@@ -488,12 +491,10 @@ export class FieldsService {
 					}
 				}
 
+				const fieldInfo = await this.schema.getField(collection, field);
+
 				// Delete field only after foreign key constraints are removed
-				if (
-					this.schema.collections[collection] &&
-					field in this.schema.collections[collection].fields &&
-					this.schema.collections[collection].fields[field].alias === false
-				) {
+				if (fieldInfo?.alias === false) {
 					await trx.schema.table(collection, (table) => {
 						table.dropColumn(field);
 					});
@@ -508,11 +509,11 @@ export class FieldsService {
 				const collectionMetaUpdates: Record<string, null> = {};
 
 				if (collectionMeta?.archive_field === field) {
-					collectionMetaUpdates.archive_field = null;
+					collectionMetaUpdates['archive_field'] = null;
 				}
 
 				if (collectionMeta?.sort_field === field) {
-					collectionMetaUpdates.sort_field = null;
+					collectionMetaUpdates['sort_field'] = null;
 				}
 
 				if (Object.keys(collectionMetaUpdates).length > 0) {
@@ -553,11 +554,11 @@ export class FieldsService {
 				await this.helpers.schema.postColumnChange();
 			}
 
-			if (this.cache && env.CACHE_AUTO_PURGE) {
+			if (this.cache && env['CACHE_AUTO_PURGE']) {
 				await this.cache.clear();
 			}
 
-			await clearSystemCache();
+			await clearField(collection, field);
 		}
 	}
 

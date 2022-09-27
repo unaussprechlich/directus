@@ -1,19 +1,20 @@
 import SchemaInspector from '@directus/schema';
-import { Knex } from 'knex';
-import { getCache, clearSystemCache } from '../cache';
-import { ALIAS_TYPES } from '../constants';
-import getDatabase, { getSchemaInspector } from '../database';
-import { systemCollectionRows } from '../database/system-data/collections';
-import env from '../env';
-import { ForbiddenException, InvalidPayloadException } from '../exceptions';
-import { FieldsService } from '../services/fields';
-import { ItemsService } from '../services/items';
-import Keyv from 'keyv';
-import { AbstractServiceOptions, Collection, CollectionMeta, MutationOptions } from '../types';
-import { Accountability, FieldMeta, RawField, SchemaOverview } from '@directus/shared/types';
-import { Table } from 'knex-schema-inspector/dist/types/table';
+import type { Knex } from 'knex';
+import { getCache } from '../cache.js';
+import { ALIAS_TYPES } from '../constants.js';
+import getDatabase, { getSchemaInspector } from '../database/index.js';
+import { systemCollectionRows } from '../database/system-data/collections/index.js';
+import env from '../env.js';
+import { ForbiddenException, InvalidPayloadException } from '../exceptions/index.js';
+import { FieldsService } from '../services/fields.js';
+import { ItemsService } from '../services/items.js';
+import type { AbstractServiceOptions, Collection, CollectionMeta, MutationOptions } from '../types/index.js';
+import type { Accountability, FieldMeta, RawField, SchemaOverview } from '@directus/shared/types';
+import type { Table } from 'knex-schema-inspector/dist/types/table';
 import { addFieldFlag } from '@directus/shared/utils';
-import { getHelpers, Helpers } from '../database/helpers';
+import { getHelpers, Helpers } from '../database/helpers/index.js';
+import type { CacheService } from './cache/cache.js';
+import { clearCollection, clearFields, clearRelationsForCollection } from '../utils/clearSystemCache.js';
 
 export type RawCollection = {
 	collection: string;
@@ -28,8 +29,8 @@ export class CollectionsService {
 	accountability: Accountability | null;
 	schemaInspector: ReturnType<typeof SchemaInspector>;
 	schema: SchemaOverview;
-	cache: Keyv<any> | null;
-	systemCache: Keyv<any>;
+	cache: CacheService | null;
+	systemCache: CacheService;
 
 	constructor(options: AbstractServiceOptions) {
 		this.knex = options.knex || getDatabase();
@@ -61,7 +62,7 @@ export class CollectionsService {
 			const existingCollections: string[] = [
 				...((await this.knex.select('collection').from('directus_collections'))?.map(({ collection }) => collection) ??
 					[]),
-				...Object.keys(this.schema.collections),
+				...Object.keys(await this.schema.getCollections()),
 			];
 
 			if (existingCollections.includes(payload.collection)) {
@@ -150,11 +151,12 @@ export class CollectionsService {
 
 			return payload.collection;
 		} finally {
-			if (this.cache && env.CACHE_AUTO_PURGE && opts?.autoPurgeCache !== false) {
+			if (this.cache && env['CACHE_AUTO_PURGE'] && opts?.autoPurgeCache !== false) {
 				await this.cache.clear();
 			}
 
-			await clearSystemCache();
+			await this.systemCache.setHashFull(`collections`, false);
+
 		}
 	}
 
@@ -182,11 +184,11 @@ export class CollectionsService {
 
 			return collections;
 		} finally {
-			if (this.cache && env.CACHE_AUTO_PURGE && opts?.autoPurgeCache !== false) {
+			if (this.cache && env['CACHE_AUTO_PURGE'] && opts?.autoPurgeCache !== false) {
 				await this.cache.clear();
 			}
 
-			await clearSystemCache();
+			await this.systemCache.setHashFull(`collections`, false);
 		}
 	}
 
@@ -231,7 +233,7 @@ export class CollectionsService {
 
 			collectionsYouHavePermissionToRead = [...new Set([...collectionsYouHavePermissionToRead])];
 
-			tablesInDatabase = tablesInDatabase.filter((table) => {
+			tablesInDatabase = tablesInDatabase.filter((table: any) => {
 				return collectionsYouHavePermissionToRead.includes(table.name);
 			});
 
@@ -246,7 +248,7 @@ export class CollectionsService {
 			const collection: Collection = {
 				collection: collectionMeta.collection,
 				meta: collectionMeta,
-				schema: tablesInDatabase.find((table) => table.name === collectionMeta.collection) ?? null,
+				schema: tablesInDatabase.find((table: any) => table.name === collectionMeta.collection) ?? null,
 			};
 
 			collections.push(collection);
@@ -264,8 +266,8 @@ export class CollectionsService {
 			}
 		}
 
-		if (env.DB_EXCLUDE_TABLES) {
-			return collections.filter((collection) => env.DB_EXCLUDE_TABLES.includes(collection.collection) === false);
+		if (env['DB_EXCLUDE_TABLES']) {
+			return collections.filter((collection) => env['DB_EXCLUDE_TABLES'].includes(collection.collection) === false);
 		}
 
 		return collections;
@@ -279,7 +281,7 @@ export class CollectionsService {
 
 		if (result.length === 0) throw new ForbiddenException();
 
-		return result[0];
+		return result[0]!;
 	}
 
 	/**
@@ -341,11 +343,11 @@ export class CollectionsService {
 
 			return collectionKey;
 		} finally {
-			if (this.cache && env.CACHE_AUTO_PURGE && opts?.autoPurgeCache !== false) {
+			if (this.cache && env['CACHE_AUTO_PURGE'] && opts?.autoPurgeCache !== false) {
 				await this.cache.clear();
 			}
 
-			await clearSystemCache();
+			await clearCollection(collectionKey);
 		}
 	}
 
@@ -372,11 +374,11 @@ export class CollectionsService {
 
 			return collectionKeys;
 		} finally {
-			if (this.cache && env.CACHE_AUTO_PURGE && opts?.autoPurgeCache !== false) {
+			if (this.cache && env['CACHE_AUTO_PURGE'] && opts?.autoPurgeCache !== false) {
 				await this.cache.clear();
 			}
 
-			await clearSystemCache();
+			await clearCollection(collectionKeys);
 		}
 	}
 
@@ -442,8 +444,10 @@ export class CollectionsService {
 					await trx('directus_permissions').delete().where('collection', '=', collectionKey);
 					await trx('directus_relations').delete().where({ many_collection: collectionKey });
 
-					const relations = this.schema.relations.filter((relation) => {
-						return relation.collection === collectionKey || relation.related_collection === collectionKey;
+					const collectionRelations = Object.values(await this.schema.getRelationsForCollection(collectionKey))
+
+					const relations = collectionRelations.filter((relation) => {
+						return relation.related_collection === collectionKey;
 					});
 
 					for (const relation of relations) {
@@ -458,7 +462,7 @@ export class CollectionsService {
 						}
 					}
 
-					const a2oRelationsThatIncludeThisCollection = this.schema.relations.filter((relation) => {
+					const a2oRelationsThatIncludeThisCollection = collectionRelations.filter((relation) => {
 						return relation.meta?.one_allowed_collections?.includes(collectionKey);
 					});
 
@@ -475,11 +479,14 @@ export class CollectionsService {
 
 			return collectionKey;
 		} finally {
-			if (this.cache && env.CACHE_AUTO_PURGE && opts?.autoPurgeCache !== false) {
+			if (this.cache && env['CACHE_AUTO_PURGE'] && opts?.autoPurgeCache !== false) {
 				await this.cache.clear();
 			}
 
-			await clearSystemCache();
+			await clearCollection(collectionKey);
+			await clearFields(collectionKey);
+			// TODO: Might be not enough, we need to clear all the related collections as well
+			await clearRelationsForCollection(collectionKey);
 		}
 	}
 
@@ -506,11 +513,9 @@ export class CollectionsService {
 
 			return collectionKeys;
 		} finally {
-			if (this.cache && env.CACHE_AUTO_PURGE && opts?.autoPurgeCache !== false) {
+			if (this.cache && env['CACHE_AUTO_PURGE'] && opts?.autoPurgeCache !== false) {
 				await this.cache.clear();
 			}
-
-			await clearSystemCache();
 		}
 	}
 }

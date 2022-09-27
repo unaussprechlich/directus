@@ -1,8 +1,14 @@
-import path from 'path';
-import { HYBRID_EXTENSION_TYPES } from '../../constants';
-import { AppExtension, AppExtensionType, Extension, HybridExtension, HybridExtensionType } from '../../types';
-import { isTypeIn } from '../array-helpers';
-import { pathToRelativeUrl } from './path-to-relative-url';
+import * as path from 'path';
+import { HYBRID_EXTENSION_TYPES } from '../../constants/index.js';
+import type {
+	AppExtension,
+	AppExtensionType,
+	Extension,
+	HybridExtension,
+	HybridExtensionType,
+} from '../../types/index.js';
+import { isTypeIn } from '../array-helpers.js';
+import { pathToRelativeUrl } from './path-to-relative-url.js';
 
 export function generateExtensionsEntry(type: AppExtensionType | HybridExtensionType, extensions: Extension[]): string {
 	const filteredExtensions = extensions.filter(

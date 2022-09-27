@@ -1,6 +1,8 @@
-import { Snapshot, SnapshotDiff } from '../types';
-import { diff } from 'deep-diff';
-import { orderBy } from 'lodash';
+import type { Snapshot, SnapshotDiff } from '../types/index.js';
+import deepDiff from 'deep-diff';
+import { orderBy } from 'lodash-es';
+
+const {diff} = deepDiff;
 
 export function getSnapshotDiff(current: Snapshot, after: Snapshot): SnapshotDiff {
 	const diffedSnapshot: SnapshotDiff = {
@@ -101,7 +103,7 @@ export function getSnapshotDiff(current: Snapshot, after: Snapshot): SnapshotDif
 	 */
 
 	const deletedCollections = diffedSnapshot.collections
-		.filter((collection) => collection.diff?.[0].kind === 'D')
+		.filter((collection) => collection.diff?.[0]!.kind === 'D')
 		.map(({ collection }) => collection);
 
 	diffedSnapshot.fields = diffedSnapshot.fields.filter(

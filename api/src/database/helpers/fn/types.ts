@@ -1,7 +1,7 @@
-import { Query, SchemaOverview } from '@directus/shared/types';
-import { Knex } from 'knex';
-import { applyFilter } from '../../../utils/apply-query';
-import { DatabaseHelper } from '../types';
+import type { Query, SchemaOverview } from '@directus/shared/types';
+import type { Knex } from 'knex';
+import { applyFilter } from '../../../utils/apply-query.js';
+import { DatabaseHelper } from '../types.js';
 
 export type FnHelperOptions = {
 	type?: string;
@@ -9,7 +9,7 @@ export type FnHelperOptions = {
 };
 
 export abstract class FnHelper extends DatabaseHelper {
-	constructor(protected knex: Knex, protected schema: SchemaOverview) {
+	constructor(protected override knex: Knex, protected schema: SchemaOverview) {
 		super(knex);
 		this.schema = schema;
 	}
@@ -22,14 +22,14 @@ export abstract class FnHelper extends DatabaseHelper {
 	abstract hour(table: string, column: string, options?: FnHelperOptions): Knex.Raw;
 	abstract minute(table: string, column: string, options?: FnHelperOptions): Knex.Raw;
 	abstract second(table: string, column: string, options?: FnHelperOptions): Knex.Raw;
-	abstract count(table: string, column: string, options?: FnHelperOptions): Knex.Raw;
+	abstract count(table: string, column: string, options?: FnHelperOptions): Promise<Knex.Raw>;
 
-	protected _relationalCount(table: string, column: string, options?: FnHelperOptions): Knex.Raw {
-		const relation = this.schema.relations.find(
+	protected async _relationalCount(table: string, column: string, options?: FnHelperOptions): Promise<Knex.Raw> {
+		const relation = (await this.schema.getRelations()).find(
 			(relation) => relation.related_collection === table && relation?.meta?.one_field === column
 		);
 
-		const currentPrimary = this.schema.collections[table].primary;
+		const currentPrimary = (await this.schema.getCollection(table))!.primary;
 
 		if (!relation) {
 			throw new Error(`Field ${table}.${column} isn't a nested relational collection`);
@@ -41,7 +41,7 @@ export abstract class FnHelper extends DatabaseHelper {
 			.where(relation.field, '=', this.knex.raw(`??.??`, [table, currentPrimary]));
 
 		if (options?.query?.filter) {
-			countQuery = applyFilter(this.knex, this.schema, countQuery, options.query.filter, relation.collection, false);
+			countQuery = await applyFilter(this.knex, this.schema, countQuery, options.query.filter, relation.collection, false);
 		}
 
 		return this.knex.raw('(' + countQuery.toQuery() + ')');

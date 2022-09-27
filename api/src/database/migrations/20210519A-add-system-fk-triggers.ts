@@ -1,6 +1,6 @@
-import { Knex } from 'knex';
-import logger from '../../logger';
-import SchemaInspector from 'knex-schema-inspector';
+import type { Knex } from 'knex';
+import logger from '../../logger.js';
+import {SchemaInspector} from 'knex-schema-inspector';
 
 /**
  * Things to keep in mind:
