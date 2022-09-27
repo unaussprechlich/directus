@@ -1,10 +1,12 @@
 import type { Accountability } from '@directus/shared/types';
-import jwt, { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import getDatabase from '../database';
 import env from '../env';
 import { InvalidCredentialsException } from '../exceptions';
 import type { DirectusTokenPayload } from '../types';
 import isDirectusJWT from '../utils/is-directus-jwt';
+
+const { JsonWebTokenError, TokenExpiredError } = jwt;
 
 export async function getAccountabilityForToken(token?: string | null): Promise<Accountability> {
 	const database = getDatabase();
