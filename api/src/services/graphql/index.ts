@@ -1,5 +1,13 @@
 import type { BaseException } from '@directus/shared/exceptions';
-import { Accountability, Action, Aggregate, CollectionOverview, Filter, Query, SchemaOverview } from '@directus/shared/types';
+import {
+	Accountability,
+	Action,
+	Aggregate,
+	CollectionOverview,
+	Filter,
+	Query,
+	SchemaOverview,
+} from '@directus/shared/types';
 import argon2 from 'argon2';
 import {
 	ArgumentNode,
@@ -197,7 +205,7 @@ export class GraphQLService {
 			throw new InvalidPayloadException('GraphQL execution error.', { graphqlErrors: [err.message] });
 		}
 
-		if(result.errors) {
+		if (result.errors) {
 			return {
 				...result,
 				errors: result.errors.map(formatError),
@@ -269,9 +277,9 @@ export class GraphQLService {
 			.filter(scopeFilter);
 
 		if (readableCollections.length > 0) {
-			const reduced: ObjectTypeComposerFieldConfigMapDefinition<any, any> = {}
+			const reduced: ObjectTypeComposerFieldConfigMapDefinition<any, any> = {};
 
-			for(const collection of readableCollections) {
+			for (const collection of readableCollections) {
 				const collectionName = this.scope === 'items' ? collection.collection : collection.collection.substring(9);
 
 				reduced[collectionName] = ReadCollectionTypes[collection.collection]?.getResolver(collection.collection) as any;
@@ -296,7 +304,7 @@ export class GraphQLService {
 			});
 		}
 
-		const writableCollections = await schema.create.getCollections()
+		const writableCollections = await schema.create.getCollections();
 
 		if (Object.keys(writableCollections).length > 0) {
 			schemaComposer.Mutation.addFields(
@@ -317,7 +325,7 @@ export class GraphQLService {
 			);
 		}
 
-		const updatableCollections = await schema.update.getCollections()
+		const updatableCollections = await schema.update.getCollections();
 
 		if (Object.keys(updatableCollections).length > 0) {
 			schemaComposer.Mutation.addFields(
@@ -351,8 +359,7 @@ export class GraphQLService {
 			);
 		}
 
-		const deletableCollections = await schema.delete.getCollections()
-
+		const deletableCollections = await schema.delete.getCollections();
 
 		if (Object.keys(deletableCollections).length > 0) {
 			schemaComposer.Mutation.addFields(
@@ -443,7 +450,6 @@ export class GraphQLService {
 			});
 
 			for (const collection of Object.values(await schema[action].getCollections())) {
-
 				const fields = await schema[action].getFields(collection.collection);
 
 				if (Object.keys(fields).length === 0) continue;
@@ -1100,7 +1106,7 @@ export class GraphQLService {
 									subscriptionName
 								),
 							},
-						});
+						} as any);
 					}
 				}
 			}
@@ -1176,12 +1182,12 @@ export class GraphQLService {
 						if (action === 'created') {
 							const { collection, key } = payload as any;
 							const s = new ItemsService(collection, { schema: await getSchema() });
-							yield { [name]: await s.readOne(key, { fields }) };
+							yield { [name]: await s.readOne(key, { fields } as Query) };
 						}
 						if (action === 'updated') {
 							const { collection, keys } = payload as any;
 							const s = new ItemsService(collection, { schema: await getSchema() });
-							yield { [name]: await s.readMany(keys, { fields }) };
+							yield { [name]: await s.readMany(keys, { fields } as Query) };
 						}
 						if (action === 'deleted') {
 							const { keys } = payload as any;
@@ -1388,7 +1394,7 @@ export class GraphQLService {
 
 		let query: Query;
 
-		const collectionExists = await this.schema.hasCollection(collection)
+		const collectionExists = await this.schema.hasCollection(collection);
 
 		const isAggregate = collection.endsWith('_aggregated') && !collectionExists;
 
@@ -1464,7 +1470,7 @@ export class GraphQLService {
 			collection.endsWith('_batch') === false &&
 			collection.endsWith('_items') === false &&
 			collection.endsWith('_item') === false &&
-			await this.schema.hasCollection(collection);
+			(await this.schema.hasCollection(collection));
 
 		const single = collection.endsWith('_items') === false && collection.endsWith('_batch') === false;
 		const batchUpdate = action === 'update' && collection.endsWith('_batch');
@@ -2715,7 +2721,7 @@ export class GraphQLService {
 			});
 		}
 
-		if (await schema.update.hasCollection('directus_users') && this.accountability?.user) {
+		if ((await schema.update.hasCollection('directus_users')) && this.accountability?.user) {
 			schemaComposer.Mutation.addFields({
 				update_users_me: {
 					type: ReadCollectionTypes['directus_users']!,
