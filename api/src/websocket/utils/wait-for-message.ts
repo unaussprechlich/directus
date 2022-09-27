@@ -1,4 +1,4 @@
-import { WebSocket, MessageEvent } from 'ws';
+import type { WebSocket, MessageEvent } from 'ws';
 
 export const waitForMessage = (client: WebSocket, timeout: number) => {
 	return new Promise((resolve, reject) => {

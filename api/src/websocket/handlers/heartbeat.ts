@@ -1,12 +1,12 @@
 import emitter from '../../emitter';
 import { fmtMessage, trimUpper } from '../utils/message';
-import { WebsocketClient, WebsocketMessage } from '../types';
+import type { WebsocketClient, WebsocketMessage } from '../types';
 import { WebsocketController, getWebsocketController } from '../controllers';
-import { ActionHandler } from '@directus/shared/types';
+import type { ActionHandler } from '@directus/shared/types';
 import logger from '../../logger';
 import env from '../../env';
 
-const HEARTBEAT_FREQUENCY = Number(env.WEBSOCKETS_HEARTBEAT_FREQUENCY) * 1000;
+const HEARTBEAT_FREQUENCY = Number(env['WEBSOCKETS_HEARTBEAT_FREQUENCY']) * 1000;
 
 export class HeartbeatHandler {
 	private pulse: NodeJS.Timer | undefined;
@@ -37,7 +37,7 @@ export class HeartbeatHandler {
 	onMessage(client: WebsocketClient, message: WebsocketMessage) {
 		if (trimUpper(message.type) !== 'PING') return;
 		// send pong message back as acknowledgement
-		client.send(fmtMessage('pong', message.uid ? { uid: message.uid } : {}));
+		client.send(fmtMessage('pong', message['uid'] ? { uid: message['uid'] } : {}));
 	}
 	pingClients() {
 		const pendingClients = new Set<WebsocketClient>(this.controller.clients);

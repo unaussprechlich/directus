@@ -1,8 +1,8 @@
 /**
  * Types for websocket controllers
  */
-import { Accountability, Query } from '@directus/shared/types';
-import { WebSocket } from 'ws';
+import type { Accountability, Query } from '@directus/shared/types';
+import type { WebSocket } from 'ws';
 
 export type SocketControllerConfig = {
 	endpoint: string; // endpoint for request upgrade

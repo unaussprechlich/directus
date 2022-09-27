@@ -1,6 +1,6 @@
 import emitter from '../../emitter';
 import { errorMessage, fmtMessage, trimUpper } from '../utils/message';
-import { WebsocketClient, WebsocketMessage } from '../types';
+import type { WebsocketClient, WebsocketMessage } from '../types';
 import { getAccountabilityForToken } from '../../utils/get-accountability-for-token';
 import { getSchema } from '../../utils/get-schema';
 import { AuthenticationService } from '../../services';
@@ -19,12 +19,12 @@ export class AuthHandler {
 	async onMessage(client: WebsocketClient, message: WebsocketMessage) {
 		if (trimUpper(message.type) !== 'AUTH') return;
 		try {
-			if (message?.access_token) {
-				await this.auth(client, message.access_token);
-			} else if (message?.refresh_token) {
-				await this.refresh(client, message.refresh_token);
-			} else if (message?.email && message?.password) {
-				await this.login(client, message.email, message.password);
+			if (message?.['access_token']) {
+				await this.auth(client, message['access_token']);
+			} else if (message?.['refresh_token']) {
+				await this.refresh(client, message['refresh_token']);
+			} else if (message?.['email'] && message?.['password']) {
+				await this.login(client, message['email'], message['password']);
 			} else {
 				throw new Error('Invalid authentication payload.');
 			}

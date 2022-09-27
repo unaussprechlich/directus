@@ -1,9 +1,9 @@
-import { Accountability } from '@directus/shared/types';
+import type { Accountability } from '@directus/shared/types';
 import jwt, { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import getDatabase from '../database';
 import env from '../env';
 import { InvalidCredentialsException } from '../exceptions';
-import { DirectusTokenPayload } from '../types';
+import type { DirectusTokenPayload } from '../types';
 import isDirectusJWT from '../utils/is-directus-jwt';
 
 export async function getAccountabilityForToken(token?: string | null): Promise<Accountability> {
@@ -21,7 +21,7 @@ export async function getAccountabilityForToken(token?: string | null): Promise<
 			let payload: DirectusTokenPayload;
 
 			try {
-				payload = jwt.verify(token, env.SECRET as string, { issuer: 'directus' }) as DirectusTokenPayload;
+				payload = jwt.verify(token, env['SECRET'] as string, { issuer: 'directus' }) as DirectusTokenPayload;
 			} catch (err: any) {
 				if (err instanceof TokenExpiredError) {
 					throw new InvalidCredentialsException('Token expired.');
@@ -32,9 +32,9 @@ export async function getAccountabilityForToken(token?: string | null): Promise<
 				}
 			}
 
-			accountability.share = payload.share;
-			accountability.share_scope = payload.share_scope;
-			accountability.user = payload.id;
+			if (payload.share) accountability.share = payload.share;
+			if (payload.share_scope) accountability.share_scope = payload.share_scope;
+			if (payload.id) accountability.user = payload.id;
 			accountability.role = payload.role;
 			accountability.admin = payload.admin_access === true || payload.admin_access == 1;
 			accountability.app = payload.app_access === true || payload.app_access == 1;

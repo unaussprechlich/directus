@@ -3,7 +3,7 @@ import { AuthHandler, HeartbeatHandler, ItemsHandler, SubscribeHandler } from '.
 
 export function startWebsocketHandlers() {
 	new AuthHandler();
-	if (env.WEBSOCKETS_HEARTBEAT_ENABLED) {
+	if (env['WEBSOCKETS_HEARTBEAT_ENABLED']) {
 		new HeartbeatHandler();
 	}
 	new ItemsHandler();

@@ -1,4 +1,4 @@
-import { Server as httpServer } from 'http';
+import type { Server as httpServer } from 'http';
 import env from '../../env';
 import { ServiceUnavailableException } from '../../exceptions';
 import logger from '../../logger';
@@ -7,14 +7,14 @@ import { GraphQLSubscriptionController, WebsocketController } from '../controlle
 let websocketController: WebsocketController | undefined;
 
 export function createWebsocketController(server: httpServer) {
-	if (env.WEBSOCKETS_REST_ENABLED) {
+	if (env['WEBSOCKETS_REST_ENABLED']) {
 		websocketController = new WebsocketController(server);
-		logger.info(`Websocket available at ws://${env.HOST}:${env.PORT}${websocketController.config.endpoint}`);
+		logger.info(`Websocket available at ws://${env['HOST']}:${env['PORT']}${websocketController.config.endpoint}`);
 	}
 }
 
 export function getWebsocketController() {
-	if (!env.WEBSOCKETS_ENABLED || !env.WEBSOCKETS_REST_ENABLED) {
+	if (!env['WEBSOCKETS_ENABLED'] || !env['WEBSOCKETS_REST_ENABLED']) {
 		throw new ServiceUnavailableException('Websocket server is disabled', {
 			service: 'get-websocket-controller',
 		});
@@ -30,9 +30,11 @@ export function getWebsocketController() {
 let subscriptionController: GraphQLSubscriptionController | undefined;
 
 export function createSubscriptionController(server: httpServer) {
-	if (env.WEBSOCKETS_GRAPHQL_ENABLED) {
+	if (env['WEBSOCKETS_GRAPHQL_ENABLED']) {
 		subscriptionController = new GraphQLSubscriptionController(server);
-		logger.info(`Subscriptions available at ws://${env.HOST}:${env.PORT}${subscriptionController.config.endpoint}`);
+		logger.info(
+			`Subscriptions available at ws://${env['HOST']}:${env['PORT']}${subscriptionController.config.endpoint}`
+		);
 	}
 }
 

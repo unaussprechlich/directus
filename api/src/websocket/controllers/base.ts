@@ -1,11 +1,11 @@
-import { Accountability } from '@directus/shared/types';
-import { IncomingMessage, Server as httpServer } from 'http';
+import type { Accountability } from '@directus/shared/types';
+import type { IncomingMessage, Server as httpServer } from 'http';
 import WebSocket, { WebSocketServer } from 'ws';
 import { parse } from 'url';
-import { SocketControllerConfig, WebRequest } from '../types';
+import type { SocketControllerConfig, WebRequest } from '../types';
 import logger from '../../logger';
 import { getAccountabilityForToken } from '../../utils/get-accountability-for-token';
-import internal from 'stream';
+import type internal from 'stream';
 import { extractToken } from '../utils';
 import emitter from '../../emitter';
 import { waitForMessage } from '../utils/wait-for-message';
@@ -70,16 +70,16 @@ export default abstract class SocketController {
 				throw new Error('Failed handshake.');
 			});
 		if (!payload) throw new Error('Failed handshake.');
-		if (trimUpper(payload.type) !== 'HANDSHAKE') {
+		if (trimUpper(payload['type']) !== 'HANDSHAKE') {
 			throw new Error('Failed handshake.');
 		}
-		if (payload.access_token) {
-			return await getAccountability(payload.access_token);
+		if (payload['access_token']) {
+			return await getAccountability(payload['access_token']);
 		}
-		if (payload.email && payload.password) {
+		if (payload['email'] && payload['password']) {
 			return await getAccountability({
-				email: payload.email,
-				password: payload.password,
+				email: payload['email'],
+				password: payload['password'],
 			});
 		}
 		throw new Error('Failed handshake.');

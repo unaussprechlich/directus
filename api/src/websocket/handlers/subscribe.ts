@@ -1,7 +1,7 @@
 import { getSchema } from '../../utils/get-schema';
 import { ItemsService } from '../../services/items';
-import { SubscriptionMap, WebsocketClient, WebsocketMessage } from '../types';
-import { Query } from '@directus/shared/types';
+import type { SubscriptionMap, WebsocketClient, WebsocketMessage } from '../types';
+import type { Query } from '@directus/shared/types';
 import emitter from '../../emitter';
 import logger from '../../logger';
 import { refreshAccountability } from '../utils/refresh-accountability';
@@ -84,7 +84,7 @@ export class SubscribeHandler {
 	}
 	async onMessage(client: WebsocketClient, message: WebsocketMessage) {
 		if (!['SUBSCRIBE', 'UNSUBSCRIBE'].includes(trimUpper(message.type))) return;
-		const collection = message.collection!;
+		const collection = message['collection']!;
 		logger.debug(`[WS REST] SubscribeHandler ${JSON.stringify(message)}`);
 		const service = new ItemsService(collection, {
 			schema: await getSchema(),
@@ -92,9 +92,9 @@ export class SubscribeHandler {
 		});
 		try {
 			// if not authorized the read should throw an error
-			await service.readByQuery({ ...(message.query || {}), limit: 1 });
+			await service.readByQuery({ ...(message['query'] || {}), limit: 1 });
 			// subscribe to events if all went well
-			this.subscribe(collection, client, { query: message.query });
+			this.subscribe(collection, client, { query: message['query'] });
 		} catch (err: any) {
 			logger.debug(`[WS REST] ERROR ${JSON.stringify(err)}`);
 		}

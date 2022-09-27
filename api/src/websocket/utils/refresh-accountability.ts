@@ -1,4 +1,4 @@
-import { Accountability } from '@directus/shared/types';
+import type { Accountability } from '@directus/shared/types';
 import getDatabase from '../../database';
 import { getAccountabilityForRole } from '../../utils/get-accountability-for-role';
 import { getSchema } from '../../utils/get-schema';

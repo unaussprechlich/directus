@@ -1,8 +1,8 @@
 import { getWebsocketController, WebsocketController } from '../websocket/controllers';
-import { WebsocketClient, WebsocketMessage } from '../websocket/types';
+import type { WebsocketClient, WebsocketMessage } from '../websocket/types';
 import { stringify } from '../websocket/utils/message';
 import emitter from '../emitter';
-import { ActionHandler } from '@directus/shared/types';
+import type { ActionHandler } from '@directus/shared/types';
 
 export class WebsocketService {
 	private controller: WebsocketController;

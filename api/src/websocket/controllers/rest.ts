@@ -1,6 +1,6 @@
-import WebSocket from 'ws';
-import { Server as httpServer } from 'http';
-import { SocketControllerConfig, WebRequest, WebsocketClient, WebsocketMessage } from '../types';
+import type WebSocket from 'ws';
+import type { Server as httpServer } from 'http';
+import type { SocketControllerConfig, WebRequest, WebsocketClient, WebsocketMessage } from '../types';
 import logger from '../../logger';
 import env from '../../env';
 import { refreshAccountability } from '../utils';
@@ -8,10 +8,10 @@ import SocketController from './base';
 import emitter from '../../emitter';
 
 function getEnvConfig(): SocketControllerConfig {
-	const endpoint: string = env.WEBSOCKETS_REST_PATH;
-	const mode: 'strict' | 'public' | 'handshake' = env.WEBSOCKETS_REST_AUTH;
+	const endpoint: string = env['WEBSOCKETS_REST_PATH'];
+	const mode: 'strict' | 'public' | 'handshake' = env['WEBSOCKETS_REST_AUTH'];
 	if (mode === 'handshake') {
-		const timeout = env.WEBSOCKETS_REST_AUTH_TIMEOUT * 1000;
+		const timeout = env['WEBSOCKETS_REST_AUTH_TIMEOUT'] * 1000;
 		return { endpoint, auth: { mode, timeout } };
 	} else {
 		return { endpoint, auth: { mode } };

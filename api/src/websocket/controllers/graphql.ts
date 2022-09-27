@@ -1,4 +1,4 @@
-import { Server as httpServer } from 'http';
+import type { Server as httpServer } from 'http';
 import logger from '../../logger';
 import { getAccountabilityForToken } from '../../utils/get-accountability-for-token';
 import { useServer as useGraphQLServer } from 'graphql-ws/lib/use/ws';
@@ -6,13 +6,13 @@ import { getSchema } from '../../utils/get-schema';
 import { GraphQLService } from '../../services';
 import env from '../../env';
 import SocketController from './base';
-import { SocketControllerConfig } from '../types';
+import type { SocketControllerConfig } from '../types';
 
 function getEnvConfig(): SocketControllerConfig {
-	const endpoint: string = env.WEBSOCKETS_GRAPHQL_PATH;
-	const mode: 'strict' | 'public' | 'handshake' = env.WEBSOCKETS_GRAPHQL_AUTH;
+	const endpoint: string = env['WEBSOCKETS_GRAPHQL_PATH'];
+	const mode: 'strict' | 'public' | 'handshake' = env['WEBSOCKETS_GRAPHQL_AUTH'];
 	if (mode === 'handshake') {
-		const timeout = env.WEBSOCKETS_GRAPHQL_AUTH_TIMEOUT * 1000;
+		const timeout = env['WEBSOCKETS_GRAPHQL_AUTH_TIMEOUT'] * 1000;
 		return { endpoint, auth: { mode, timeout } };
 	} else {
 		return { endpoint, auth: { mode } };
@@ -27,7 +27,7 @@ export class GraphQLSubscriptionController extends SocketController {
 			{
 				context: {},
 				schema: async (ctx) => {
-					const accountability = await getAccountabilityForToken(ctx.connectionParams?.token as string | undefined);
+					const accountability = await getAccountabilityForToken(ctx.connectionParams?.['token'] as string | undefined);
 					const service = new GraphQLService({
 						schema: await getSchema(),
 						scope: 'items',

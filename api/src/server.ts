@@ -90,7 +90,7 @@ export async function createServer(): Promise<http.Server> {
 		res.once('close', complete.bind(null, false));
 	});
 
-	if (env.WEBSOCKETS_ENABLED) {
+	if (env['WEBSOCKETS_ENABLED']) {
 		createSubscriptionController(server);
 		createWebsocketController(server);
 		startWebsocketHandlers();

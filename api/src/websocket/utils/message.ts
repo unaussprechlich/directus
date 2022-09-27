@@ -1,4 +1,4 @@
-import { WebsocketClient } from '../types';
+import type { WebsocketClient } from '../types';
 
 /**
  * Message utils
